@@ -5,3 +5,9 @@ credentials
 maps
 logs
 temp
+dist
+package-lock.json
+package.json
+discord_data.txt
+config/index.js
+update.sh
