@@ -114,11 +114,11 @@ module.exports = {
                     Client.client.intlGet(guildId, 'notShowingCap') : trademark}`,
                 options: [
                     {
-                        label: 'rustplusplus',
+                        label: 'HondaBot',
                         description: Client.client.intlGet(guildId, 'trademarkShownBeforeMessage', {
-                            trademark: 'rustplusplus'
+                            trademark: 'HondaBot'
                         }),
-                        value: 'rustplusplus'
+                        value: 'HondaBot'
                     },
                     {
                         label: 'Rust++',
