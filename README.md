@@ -1,5 +1,3 @@
-A NodeJS Discord Bot that uses the [rustplus.js](https://github.com/liamcottle/rustplus.js) library to utilize the power of the [Rust+ Companion App](https://rust.facepunch.com/companion) with additional Quality-of-Life features.
-
 ## **Features**
 
 * Receive notifications for [In-Game Events](docs/discord_text_channels.md#events-channel) (Patrol Helicopter, Cargo Ship, Chinook 47, Oil Rigs triggered).
@@ -59,11 +57,24 @@ Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TO
     $ 5. Create .env file with secret Discord data
     $ 6. Install Docker
     $ 7. Disable IPv6 on your Raspberry Pi
+    $     a. Create /etc/docker/daemon.json
     $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
     $ 9. docker compose up -d
 
-## **Thanks to**
+## Updating Docker IPv4 Hosts
+```
+sudo tee /usr/local/bin/update-docker-hosts << 'EOF'
+#!/bin/bash
+sudo sed -i '/registry-1.docker.io/d' /etc/hosts
+sudo sed -i '/auth.docker.io/d' /etc/hosts
+sudo sed -i '/production.cloudflare.docker.com/d' /etc/hosts
 
-**liamcottle**@GitHub - for the [rustplus.js](https://github.com/liamcottle/rustplus.js) library.
-<br>
-**.Vegas.#4844**@Discord - for the awesome icons!
+echo "$(getent ahosts registry-1.docker.io | grep -v ':' | head -1 | awk '{print $1}') registry-1.docker.io" | sudo tee -a /etc/hosts
+echo "$(getent ahosts auth.docker.io | grep -v ':' | head -1 | awk '{print $1}') auth.docker.io" | sudo tee -a /etc/hosts
+echo "$(getent ahosts production.cloudflare.docker.com | grep -v ':' | head -1 | awk '{print $1}') production.cloudflare.docker.com" | sudo tee -a /etc/hosts
+
+echo "Docker hosts updated!"
+EOF
+sudo chmod +x /usr/local/bin/update-docker-hosts
+```
+
