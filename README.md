@@ -37,18 +37,7 @@ or
 
     $ ./update.sh
 
-
-## **Running via docker**
-
-    $ docker run --rm -it -v ${pwd}/credentials:/app/credentials -v ${pwd}/instances:/app/instances -v ${pwd}/logs:/app/logs -e RPP_DISCORD_CLIENT_ID=111....1111 -e RPP_DISCORD_TOKEN=token --name rpp ghcr.io/alexemanuelol/rustplusplus
-
-or
-
-    $ docker-compose up -d
-
-Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TOKEN in the docker command/docker-compose.yml
-
-## Running on Raspberry Pi
+## Running on Raspberry Pi with Docker
 
     $ 1. Install Git
     $ 2. Clone HondaBot onto the Raspberry Pi using SSH
@@ -57,7 +46,9 @@ Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TO
     $ 5. Create .env file with secret Discord data
     $ 6. Install Docker
     $ 7. Disable IPv6 on your Raspberry Pi
-    $     a. Create /etc/docker/daemon.json
+    $    a. Create /etc/docker/daemon.json
+    $    b. sudo systemctl daemon-reload
+    $       sudo systemctl restart docker
     $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
     $ 9. docker compose up -d
 
