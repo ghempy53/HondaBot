@@ -46,7 +46,8 @@ or
     $ 5. sudo ./update.sh
     $ 6. Create .env file with secret Discord data
     $ 7. Install Docker
-    $ 8. Disable IPv6 on your Raspberry Pi
+    $ 8. Create and run update-docker-hosts OR
+    $ 8. Disable IPv6 on your Raspberry Pi (Manual Steps)
     $    a. sudo nano /etc/hosts
     $    b. getent ahosts registry-1.docker.io | grep -v ":" | head -1
     $    c. getent ahosts auth.docker.io | grep -v ":" | head -1
