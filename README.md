@@ -53,8 +53,14 @@ Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TO
 ## Running on Raspberry Pi
 
     $ 1. Install Git
-    $ 2. Install npm and NodeJS v22 or higher
-    $ 3. Install Docker
+    $ 2. Clone HondaBot onto the Raspberry Pi using SSH
+    $ 3. Install npm and NodeJS v22 or higher
+    $ 4. sudo ./update.sh
+    $ 5. Create .env file with secret Discord data
+    $ 6. Install Docker
+    $ 7. Disable IPv6 on your Raspberry Pi
+    $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
+    $ 9. docker compose up -d
 
 ## **Thanks to**
 
