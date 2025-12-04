@@ -52,7 +52,9 @@ Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TO
 
 ## Running on Raspberry Pi
 
-    $ Coming soon...
+    $ 1. Install Git
+    $ 2. Install npm and NodeJS v22 or higher
+    $ 3. Install Docker
 
 ## **Thanks to**
 
