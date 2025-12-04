@@ -39,27 +39,29 @@ or
 
 ## Running on Raspberry Pi with Docker
 
-    $ 1. Install Git
-    $ 2. Clone HondaBot onto the Raspberry Pi using SSH
-    $ 3. Install npm and NodeJS v22 or higher
-    $ 4. npm install
-    $ 5. sudo ./update.sh
-    $ 6. Create .env file with secret Discord data
-    $ 7. Install Docker
-    $ 8. Create and run update-docker-hosts OR
-    $ 8. Disable IPv6 on your Raspberry Pi (Manual Steps)
-    $    a. sudo nano /etc/hosts
-    $    b. getent ahosts registry-1.docker.io | grep -v ":" | head -1
-    $    c. getent ahosts auth.docker.io | grep -v ":" | head -1
-    $    d. getent ahosts production.cloudflare.docker.com | grep -v ":" | head -1
-    $    e. sudo tee -a /etc/hosts << 'EOF'
-            REGISTRY_IP registry-1.docker.io
-            AUTH_DOCKER_IP auth.docker.io
-            CLOUDFARE_IP production.cloudflare.docker.com
-            EOF
-    $    g. sudo systemctl restart docker
-    $ 9. DOCKER_BUILDKIT=0 docker compose build --no-cache
-    $ 10. docker compose up -d
+```
+1. Install Git
+2. Clone HondaBot onto the Raspberry Pi using SSH
+3. Install npm and NodeJS v22 or higher
+4. npm install
+5. sudo ./update.sh
+6. Create .env file with secret Discord data
+7. Install Docker
+8. Create and run update-docker-hosts OR
+9. Disable IPv6 on your Raspberry Pi (Manual Steps)
+    a. getent ahosts registry-1.docker.io | grep -v ":" | head -1
+    b. getent ahosts auth.docker.io | grep -v ":" | head -1
+    c. getent ahosts production.cloudflare.docker.com | grep -v ":" | head -1
+    d. sudo nano /etc/hosts
+    e. Copy the IP address from each command to the end of the file
+        REGISTRY_IP registry-1.docker.io
+        AUTH_DOCKER_IP auth.docker.io
+        CLOUDFARE_IP production.cloudflare.docker.com
+
+    f. sudo systemctl restart docker
+10.  DOCKER_BUILDKIT=0 docker compose build --no-cache
+11. docker compose up -d
+```
 
 ## Updating Docker IPv4 Hosts
 ```
