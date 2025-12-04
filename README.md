@@ -46,10 +46,24 @@ or
     $ 5. Create .env file with secret Discord data
     $ 6. Install Docker
     $ 7. Disable IPv6 on your Raspberry Pi
-    $    a. Create /etc/docker/daemon.json
-    $    b. sudo systemctl daemon-reload
-    $    c. sudo systemctl restart docker
-    $    d. sudo sysctl -p
+    $    a. sudo nano /etc/docker/daemon.json
+            Copy this text into the file
+            {
+                "ipv6": false,
+                "experimental": false,
+                "features": {
+                    "buildkit": false
+                }
+            }
+    $    b. sudo nano /etc/sysctl.conf
+    $    c. Add these lines at the bottom of the file
+    $         net.ipv6.conf.all.disable_ipv6 = 1
+    $         net.ipv6.conf.default.disable_ipv6 = 1
+    $    d. sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+            sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+    $    e. sudo systemctl daemon-reload
+    $    f. sudo systemctl restart docker
+    $    g. sudo sysctl -p
     $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
     $ 9. docker compose up -d
 
