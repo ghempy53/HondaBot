@@ -55,15 +55,15 @@ or
                     "buildkit": false
                 }
             }
+            sudo systemctl daemon-reload
     $    b. sudo nano /etc/sysctl.conf
     $    c. Add these lines at the bottom of the file
     $         net.ipv6.conf.all.disable_ipv6 = 1
     $         net.ipv6.conf.default.disable_ipv6 = 1
     $    d. sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
             sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-    $    e. sudo systemctl daemon-reload
+    $    e. sudo sysctl -p
     $    f. sudo systemctl restart docker
-    $    g. sudo sysctl -p
     $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
     $ 9. docker compose up -d
 
