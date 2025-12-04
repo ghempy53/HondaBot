@@ -48,7 +48,8 @@ or
     $ 7. Disable IPv6 on your Raspberry Pi
     $    a. Create /etc/docker/daemon.json
     $    b. sudo systemctl daemon-reload
-    $       sudo systemctl restart docker
+    $    c. sudo systemctl restart docker
+    $    d. sudo sysctl -p
     $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
     $ 9. docker compose up -d
 
