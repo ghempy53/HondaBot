@@ -42,10 +42,11 @@ or
     $ 1. Install Git
     $ 2. Clone HondaBot onto the Raspberry Pi using SSH
     $ 3. Install npm and NodeJS v22 or higher
-    $ 4. sudo ./update.sh
-    $ 5. Create .env file with secret Discord data
-    $ 6. Install Docker
-    $ 7. Disable IPv6 on your Raspberry Pi
+    $ 4. npm install
+    $ 5. sudo ./update.sh
+    $ 6. Create .env file with secret Discord data
+    $ 7. Install Docker
+    $ 8. Disable IPv6 on your Raspberry Pi
     $    a. sudo nano /etc/docker/daemon.json
             Copy this text into the file
             {
@@ -64,8 +65,8 @@ or
             sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
     $    e. sudo sysctl -p
     $    f. sudo systemctl restart docker
-    $ 8. DOCKER_BUILDKIT=0 docker compose build --no-cache
-    $ 9. docker compose up -d
+    $ 9. DOCKER_BUILDKIT=0 docker compose build --no-cache
+    $ 10. docker compose up -d
 
 ## Updating Docker IPv4 Hosts
 ```
