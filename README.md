@@ -50,6 +50,10 @@ or
 
 Make sure you use the correct values for DISCORD_CLIENT_ID as well as DISCORD_TOKEN in the docker command/docker-compose.yml
 
+## Running on Raspberry Pi
+
+    $ Coming soon...
+
 ## **Thanks to**
 
 **liamcottle**@GitHub - for the [rustplus.js](https://github.com/liamcottle/rustplus.js) library.
