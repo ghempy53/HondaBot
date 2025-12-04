@@ -75,6 +75,7 @@ echo "$(getent ahosts production.cloudflare.docker.com | grep -v ':' | head -1 |
 
 echo "Docker hosts updated!"
 EOF
+
 sudo chmod +x /usr/local/bin/update-docker-hosts
 ```
 
