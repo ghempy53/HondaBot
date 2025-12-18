@@ -1,17 +1,24 @@
-FROM node:18
+# Use ARM64 Node base image
+FROM arm64v8/node:22-bookworm
 
-RUN apt-get update && apt-get install -y graphicsmagick && apt-get clean
+# Install dependencies (GraphicsMagick if needed)
+RUN apt-get update \
+ && apt-get install -y graphicsmagick \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
 WORKDIR /app
 
-COPY package.json /app/package.json
-COPY package-lock.json /app/package-lock.json
+# Copy package files and install
+COPY package.json package-lock.json ./
 RUN npm install
-COPY . /app
 
-VOLUME [ "/app/credentials" ]
-VOLUME [ "/app/instances" ]
-VOLUME [ "/app/logs" ]
-VOLUME [ "/app/maps" ]
+# Copy all local code
+COPY . .
 
-CMD ["npm", "start"]
+# Expose volumes for persistent data
+VOLUME [ "/app/credentials", "/app/instances", "/app/logs", "/app/maps" ]
+
+# Run bot
+CMD ["npm", "start", "run"]
