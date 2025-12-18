@@ -1,10 +1,10 @@
 {
-    "name": "rustplusplus",
+    "name": "HondaBot",
     "version": "1.22.0",
     "description": "A NodeJS Discord Bot that uses the rustplus.js library to utilize the power of the Rust+ Companion App with additional Quality-of-Life features.",
     "main": "index.ts",
     "scripts": {
-        "start": "ts-node .",
+        "start": "node --max-old-space-size=1536 -r ts-node/register .",
         "preinstall": "npx npm-force-resolutions",
         "test": "tsc --noEmit -p ."
     },
