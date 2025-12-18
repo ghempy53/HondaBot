@@ -46,12 +46,13 @@ module.exports = {
             client.log(client.intlGet(null, 'warningCap'), client.intlGet(null, 'ignoreSetUsername'));
         }
 
-        try {
+        // COMMENTING THIS OUT FOR CUSTOM DISCORD BOT IMAGE
+        /*try {
             await client.user.setAvatar(Path.join(__dirname, '..', 'resources/images/rustplusplus_logo.png'));
         }
         catch (e) {
             client.log(client.intlGet(null, 'warningCap'), client.intlGet(null, 'ignoreSetAvatar'));
-        }
+        }*/
 
         client.user.setPresence({
             activities: [{ name: '/help', type: Discord.ActivityType.Listening }],
