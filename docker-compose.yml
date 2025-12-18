@@ -14,4 +14,3 @@ services:
       - RPP_DISCORD_USERNAME=${RPP_DISCORD_USERNAME}
     mem_limit: 600m
     cpus: 0.8
-
