@@ -1713,6 +1713,8 @@ class RustPlus extends RustPlusLib {
         switch (subcommand) {
             case commandSearchEn:
             case commandSearch: {
+                const MAX_MESSAGE_LENGTH = 129;
+                
                 if (!['all', 'buy', 'sell'].includes(orderType)) {
                     return Client.client.intlGet(this.guildId, 'notAValidOrderType', {
                         order: orderType
@@ -1726,7 +1728,8 @@ class RustPlus extends RustPlusLib {
                     });
                 }
 
-                const locations = [];
+                // Collect all matching orders with full details
+                const orders = [];
                 for (const vendingMachine of this.mapMarkers.vendingMachines) {
                     if (!vendingMachine.hasOwnProperty('sellOrders')) continue;
 
@@ -1744,17 +1747,123 @@ class RustPlus extends RustPlusLib {
                             (orderItemId === parseInt(itemId) || orderCurrencyId === parseInt(itemId))) ||
                             (orderType === 'buy' && orderCurrencyId === parseInt(itemId)) ||
                             (orderType === 'sell' && orderItemId === parseInt(itemId))) {
-                            if (locations.includes(vendingMachine.location.location)) continue;
-                            locations.push(vendingMachine.location.location);
+                            
+                            const orderItemName = orderItemId ? 
+                                Client.client.items.getName(orderItemId) : 'Unknown';
+                            const orderCurrencyName = orderCurrencyId ? 
+                                Client.client.items.getName(orderCurrencyId) : 'Unknown';
+                            
+                            orders.push({
+                                location: vendingMachine.location.location,
+                                quantity: order.quantity,
+                                itemName: orderItemName,
+                                costPerItem: order.costPerItem,
+                                currencyName: orderCurrencyName,
+                                itemIsBlueprint: order.itemIsBlueprint,
+                                currencyIsBlueprint: order.currencyIsBlueprint
+                            });
                         }
                     }
                 }
 
-                if (locations.length === 0) {
+                if (orders.length === 0) {
                     return Client.client.intlGet(this.guildId, 'noItemFound');
                 }
 
-                return locations.join(', ');
+                // Group by currency, then sort:
+                // 1. Groups ordered by their lowest price (best deal currency first)
+                // 2. Within each group, sorted by price (lowest first)
+                
+                // First, group orders by currency
+                const groupedByCurrency = {};
+                for (const order of orders) {
+                    const key = order.currencyName;
+                    if (!groupedByCurrency[key]) {
+                        groupedByCurrency[key] = [];
+                    }
+                    groupedByCurrency[key].push(order);
+                }
+
+                // Sort each currency group by price (lowest first)
+                for (const currency in groupedByCurrency) {
+                    groupedByCurrency[currency].sort((a, b) => a.costPerItem - b.costPerItem);
+                }
+
+                // Sort currency groups by their lowest price
+                const sortedCurrencies = Object.keys(groupedByCurrency).sort((a, b) => {
+                    const lowestA = groupedByCurrency[a][0].costPerItem;
+                    const lowestB = groupedByCurrency[b][0].costPerItem;
+                    return lowestA - lowestB;
+                });
+
+                // Flatten back into a single sorted array
+                const sortedOrders = [];
+                for (const currency of sortedCurrencies) {
+                    sortedOrders.push(...groupedByCurrency[currency]);
+                }
+                orders.length = 0;
+                orders.push(...sortedOrders);
+
+                // Format each order as a string: [G10] 1x AK47 for 500x Scrap
+                const formatOrder = (order) => {
+                    const bpItem = order.itemIsBlueprint ? ' BP' : '';
+                    const bpCurrency = order.currencyIsBlueprint ? ' BP' : '';
+                    return `[${order.location}] ${order.quantity}x ${order.itemName}${bpItem} for ${order.costPerItem}x ${order.currencyName}${bpCurrency}`;
+                };
+
+                const formattedOrders = orders.map(formatOrder);
+
+                // Account for trademark in message length calculation
+                const trademark = this.generalSettings.trademark;
+                const trademarkString = (trademark === 'NOT SHOWING') ? '' : `${trademark} | `;
+                const availableLength = MAX_MESSAGE_LENGTH - trademarkString.length;
+
+                // If 1-2 orders and they fit in one message, return single string
+                if (orders.length <= 2) {
+                    const combined = formattedOrders.join(' | ');
+                    if (combined.length <= availableLength) {
+                        return combined;
+                    }
+                }
+
+                // Split into multiple messages, never splitting an order across messages
+                const messages = [];
+                let currentMessage = '';
+                const separator = ' | ';
+                
+                for (const orderStr of formattedOrders) {
+                    // If this single order is too long by itself, truncate it
+                    if (orderStr.length > availableLength) {
+                        if (currentMessage) {
+                            messages.push(currentMessage);
+                            currentMessage = '';
+                        }
+                        messages.push(orderStr.substring(0, availableLength - 3) + '...');
+                        continue;
+                    }
+
+                    const potentialMessage = currentMessage 
+                        ? currentMessage + separator + orderStr 
+                        : orderStr;
+                    
+                    if (potentialMessage.length <= availableLength) {
+                        currentMessage = potentialMessage;
+                    } else {
+                        // Current message is full, push it and start new one
+                        if (currentMessage) {
+                            messages.push(currentMessage);
+                        }
+                        currentMessage = orderStr;
+                    }
+                }
+                
+                // Don't forget the last message
+                if (currentMessage) {
+                    messages.push(currentMessage);
+                }
+
+                // Return array for multiple messages, or single string for one
+                return messages.length === 1 ? messages[0] : messages;
             } break;
 
             case commandSubEn:
