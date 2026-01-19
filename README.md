@@ -49,15 +49,22 @@ or
 7. Install Docker
 8. Create and run update-docker-hosts OR
 9. Disable IPv6 on your Raspberry Pi (Manual Steps)
-    a. getent ahosts registry-1.docker.io | grep -v ":" | head -1
-    b. getent ahosts auth.docker.io | grep -v ":" | head -1
-    c. getent ahosts production.cloudflare.docker.com | grep -v ":" | head -1
-    d. sudo nano /etc/hosts
-    e. Copy the IP address from each command to the end of the file
-        REGISTRY_IP registry-1.docker.io
-        AUTH_DOCKER_IP auth.docker.io
-        CLOUDFARE_IP production.cloudflare.docker.com
-
+    a. sudo nano /etc/sysctl.conf
+    b. Add this at the end of the file
+    ```
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+    ```
+    c. Save and exit nano and apply with 'sudo sysctl -p'
+    d. Create or edit /etc/docker/daemon.json
+    e. Add this snippet
+    ```
+    {
+        "ipv6": false,
+        "ip6tables": false
+    }
+    ```
     f. sudo systemctl restart docker
 10.  DOCKER_BUILDKIT=0 docker compose build --no-cache
 11. docker compose up -d
