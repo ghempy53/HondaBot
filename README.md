@@ -62,7 +62,9 @@ or
     ```
     {
         "ipv6": false,
-        "ip6tables": false
+        "ip6tables": false,
+        "fixed-cidr-v6": "",
+        "dns": ["8.8.8.8", "8.8.4.4"]
     }
     ```
     f. sudo systemctl restart docker
