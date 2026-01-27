@@ -116,7 +116,7 @@ async function addCredentials(client, interaction, verifyId) {
     const steamId = interaction.options.getString('steam_id');
     const isHoster = interaction.options.getBoolean('host') || Object.keys(credentials).length === 1;
 
-    if (Object.keys(credentials) !== 1 && isHoster) {
+    if (Object.keys(credentials).length !== 1 && isHoster) {
         if (Config.discord.needAdminPrivileges && !client.isAdministrator(interaction)) {
             const str = client.intlGet(interaction.guildId, 'missingPermission');
             client.interactionEditReply(interaction, DiscordEmbeds.getActionInfoEmbed(1, str));
