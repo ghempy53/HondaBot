@@ -196,7 +196,7 @@ class DiscordBot extends Discord.Client {
         const channel = DiscordTools.getTextChannelById(interaction.guildId, interaction.channelId);
         const args = new Object();
         args['guild'] = `${interaction.member.guild.name} (${interaction.member.guild.id})`;
-        args['channel'] = `${channel.name} (${interaction.channelId})`;
+        args['channel'] = `${channel?.name || 'Unknown'} (${interaction.channelId})`;
         args['user'] = `${interaction.user.username} (${interaction.user.id})`;
         args[(type === 'slashCommand') ? 'command' : 'customid'] = (type === 'slashCommand') ?
             `${interaction.commandName}` : `${interaction.customId}`;
