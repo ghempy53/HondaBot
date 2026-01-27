@@ -1,92 +1,250 @@
-## **Features**
+# HondaBot
 
-* Receive notifications for [In-Game Events](docs/discord_text_channels.md#events-channel) (Patrol Helicopter, Cargo Ship, Chinook 47, Oil Rigs triggered).
-* Control [Smart Switches](docs/smart_devices.md#smart-switches) or Groups of Smart Switches via Discord or In-Game Team Chat.
-* Setup [Smart Alarms](docs/smart_devices.md#smart-alarms) to notify in Discord or In-Game Team Chat whenever they are triggered.
-* Use [Storage Monitors](docs/smart_devices.md#storage-monitors) to keep track of Tool Cupboard Upkeep or Large Wooden Box/Vending Machine content.
-* Head over to the [Information Text Channel](docs/images/information_channel.png) to see all sorts of information about the server, ongoing events and team member status.
-* Communicate with teammates from [Discord to In-Game](docs/discord_text_channels.md#teamchat-channel) and vice versa.
-* Keep track of other teams on the server with the [Battlemetrics Player Tracker](docs/discord_text_channels.md#trackers-channel).
-* Alot of [QoL Commands](docs/commands.md) that can be used In-Game or from Discord.
-* View the [Full list of features](docs/full_list_features.md).
+A NodeJS Discord Bot that uses the [rustplus.js](https://github.com/liamcottle/rustplus.js) library to utilize the power of the Rust+ Companion App with additional Quality-of-Life features. Modified from [rustplusplus](https://github.com/alexemanuelol/rustplusplus).
 
+## Features
 
-## **Documentation**
+- Receive notifications for in-game events (Patrol Helicopter, Cargo Ship, Chinook 47, Oil Rigs triggered)
+- Control Smart Switches or Groups of Smart Switches via Discord or In-Game Team Chat
+- Setup Smart Alarms to notify in Discord or In-Game Team Chat whenever they are triggered
+- Use Storage Monitors to keep track of Tool Cupboard Upkeep or Large Wooden Box/Vending Machine content
+- View server information, ongoing events, and team member status in the Information Text Channel
+- Communicate with teammates from Discord to In-Game and vice versa
+- Keep track of other teams on the server with the Battlemetrics Player Tracker
+- Many QoL commands that can be used In-Game or from Discord
 
-> Documentation can be found [here](https://github.com/alexemanuelol/rustplusplus/blob/master/docs/documentation.md). The documentation explains the features as well as `how to setup the bot`, so make sure to take a look at it 😉
+For detailed documentation, see the [full documentation](https://github.com/alexemanuelol/rustplusplus/blob/master/docs/documentation.md).
 
-## **Credentials**
+## Prerequisites
 
-> You can get your credentials by running the `rustplusplus credential application`. Download it [here](https://github.com/alexemanuelol/rustplusplus-credential-application/releases/download/v1.4.0/rustplusplus-1.4.0-win-x64.exe)
+- Raspberry Pi 4 (2GB+ RAM recommended)
+- Raspberry Pi OS (64-bit)
+- Docker and Docker Compose
+- Git
+- Discord Bot Token ([Discord Developer Portal](https://discord.com/developers/applications))
+- Rust+ Credentials ([rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application/releases/download/v1.4.0/rustplusplus-1.4.0-win-x64.exe))
 
+## Installation
 
-## **How to run the bot**
+### 1. Install Docker
 
-> To run the bot, simply open the terminal of your choice and run the following from repository root:
-
-    $ npm start run
-
-
-## **How to update the repository**
-
-> Depending on your OS / choice of terminal you can run:
-
-    $ update.bat
-
-or
-
-    $ ./update.sh
-
-## Running on Raspberry Pi with Docker
-
-```
-1. Install Git
-2. Clone HondaBot onto the Raspberry Pi using SSH
-3. Install npm and NodeJS v22 or higher
-4. npm install
-5. sudo ./update.sh
-6. Create .env file with secret Discord data
-7. Install Docker
-8. Create and run update-docker-hosts OR
-9. Disable IPv6 on your Raspberry Pi (Manual Steps)
-    a. sudo nano /etc/sysctl.conf
-    b. Add this at the end of the file
-    ```
-    net.ipv6.conf.all.disable_ipv6 = 1
-    net.ipv6.conf.default.disable_ipv6 = 1
-    net.ipv6.conf.lo.disable_ipv6 = 1
-    ```
-    c. Save and exit nano and apply with 'sudo sysctl -p'
-    d. Create or edit /etc/docker/daemon.json
-    e. Add this snippet
-    ```
-    {
-        "ipv6": false,
-        "ip6tables": false,
-        "fixed-cidr-v6": "",
-        "dns": ["8.8.8.8", "8.8.4.4"]
-    }
-    ```
-    f. sudo systemctl restart docker
-10.  DOCKER_BUILDKIT=0 docker compose build --no-cache
-11. docker compose up -d
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
 ```
 
-## Updating Docker IPv4 Hosts
-```
-sudo tee /usr/local/bin/update-docker-hosts << 'EOF'
-#!/bin/bash
-sudo sed -i '/registry-1.docker.io/d' /etc/hosts
-sudo sed -i '/auth.docker.io/d' /etc/hosts
-sudo sed -i '/production.cloudflare.docker.com/d' /etc/hosts
+Log out and back in for group changes to take effect.
 
-echo "$(getent ahosts registry-1.docker.io | grep -v ':' | head -1 | awk '{print $1}') registry-1.docker.io" | sudo tee -a /etc/hosts
-echo "$(getent ahosts auth.docker.io | grep -v ':' | head -1 | awk '{print $1}') auth.docker.io" | sudo tee -a /etc/hosts
-echo "$(getent ahosts production.cloudflare.docker.com | grep -v ':' | head -1 | awk '{print $1}') production.cloudflare.docker.com" | sudo tee -a /etc/hosts
+### 2. Clone the Repository
 
-echo "Docker hosts updated!"
-EOF
-
-sudo chmod +x /usr/local/bin/update-docker-hosts
+```bash
+git clone https://github.com/YOUR_USERNAME/HondaBot.git
+cd HondaBot
 ```
 
+### 3. Create Environment File
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Add your Discord credentials:
+
+```env
+RPP_DISCORD_CLIENT_ID=your_client_id_here
+RPP_DISCORD_TOKEN=your_bot_token_here
+RPP_DISCORD_USERNAME=your_discord_username
+TZ=America/New_York
+```
+
+### 4. Fix IPv6 Issues (Recommended)
+
+Raspberry Pi often has IPv6 connectivity issues with Docker. Run the helper script to fix this:
+
+```bash
+chmod +x docker-helper.sh
+./docker-helper.sh fix-ipv6
+```
+
+Or manually disable IPv6:
+
+```bash
+# Add to /etc/sysctl.conf
+sudo nano /etc/sysctl.conf
+```
+
+```
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+```
+
+```bash
+# Apply changes
+sudo sysctl -p
+
+# Configure Docker daemon
+sudo nano /etc/docker/daemon.json
+```
+
+```json
+{
+    "ipv6": false,
+    "ip6tables": false,
+    "fixed-cidr-v6": "",
+    "dns": ["8.8.8.8", "8.8.4.4"]
+}
+```
+
+```bash
+sudo systemctl restart docker
+```
+
+### 5. Build and Start
+
+```bash
+./docker-helper.sh build
+./docker-helper.sh start
+```
+
+## Docker Helper Commands
+
+| Command | Description |
+|---------|-------------|
+| `./docker-helper.sh build` | Build the Docker image |
+| `./docker-helper.sh start` | Start the container |
+| `./docker-helper.sh stop` | Stop the container |
+| `./docker-helper.sh restart` | Restart the container |
+| `./docker-helper.sh logs` | View logs (follow mode) |
+| `./docker-helper.sh logs-tail` | View last 100 log lines |
+| `./docker-helper.sh status` | Show container status |
+| `./docker-helper.sh health` | Check health and resource usage |
+| `./docker-helper.sh shell` | Open shell in container |
+| `./docker-helper.sh backup` | Backup persistent data |
+| `./docker-helper.sh update` | Pull latest code and rebuild |
+| `./docker-helper.sh clean` | Remove container and image |
+| `./docker-helper.sh fix-ipv6` | Apply IPv6 fix for Raspberry Pi |
+
+## Manual Docker Commands
+
+If you prefer not to use the helper script:
+
+```bash
+# Build
+docker compose build --no-cache
+
+# Start
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+
+# Restart
+docker compose restart
+```
+
+## Resource Configuration
+
+The default configuration is optimized for Raspberry Pi 4 with 4GB RAM. Adjust the memory limits in `docker-compose.yml` based on your Pi model:
+
+| Pi 4 Model | Memory Limit | CPU Limit |
+|------------|--------------|-----------|
+| 1GB | 768m | 2.0 |
+| 2GB | 1024m | 3.0 |
+| 4GB | 1536m | 3.0 |
+| 8GB | 2048m | 4.0 |
+
+## Updating
+
+To update HondaBot to the latest version:
+
+```bash
+./docker-helper.sh update
+```
+
+Or manually:
+
+```bash
+./docker-helper.sh stop
+git pull origin master
+./docker-helper.sh build
+./docker-helper.sh start
+```
+
+## Persistent Data
+
+The following directories are mounted as volumes and persist across container restarts:
+
+| Directory | Purpose |
+|-----------|---------|
+| `./credentials` | FCM credentials for Rust+ |
+| `./instances` | Server and guild configurations |
+| `./logs` | Application logs |
+| `./maps` | Generated map images |
+
+## Backup
+
+Create a backup of all persistent data:
+
+```bash
+./docker-helper.sh backup
+```
+
+This creates a timestamped tarball (e.g., `backup_20250126_120000.tar.gz`) containing credentials, instances, logs, maps, and your `.env` file.
+
+## Troubleshooting
+
+### Container won't start
+
+Check the logs for errors:
+
+```bash
+./docker-helper.sh logs-tail
+```
+
+### Build fails with network errors
+
+Run the IPv6 fix:
+
+```bash
+./docker-helper.sh fix-ipv6
+```
+
+### Out of memory errors
+
+Reduce the memory limit in `docker-compose.yml` or add swap space:
+
+```bash
+sudo dphys-swapfile swapoff
+sudo nano /etc/dphys-swapfile
+# Set CONF_SWAPSIZE=2048
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+```
+
+### Container keeps restarting
+
+Check health status and logs:
+
+```bash
+./docker-helper.sh health
+./docker-helper.sh logs-tail
+```
+
+## Credentials
+
+Get your Rust+ credentials by running the [rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application/releases/download/v1.4.0/rustplusplus-1.4.0-win-x64.exe) on Windows.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Credits
+
+- Original project: [rustplusplus](https://github.com/alexemanuelol/rustplusplus) by [alexemanuelol](https://github.com/alexemanuelol)
+- Rust+ library: [rustplus.js](https://github.com/liamcottle/rustplus.js) by [liamcottle](https://github.com/liamcottle)
