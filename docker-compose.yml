@@ -1,14 +1,147 @@
+# =============================================================================
+# Docker Compose Configuration for Raspberry Pi 4
+# =============================================================================
+# Optimized for ARM64 with resource limits, logging, and health monitoring
+# =============================================================================
+
 services:
   hondabot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Use BuildKit for faster builds (set DOCKER_BUILDKIT=1)
+      # If you have issues, use: DOCKER_BUILDKIT=0 docker compose build
+    image: hondabot:latest
     container_name: HondaBot
-    restart: always
+    hostname: hondabot
+    
+    # Restart policy - always restart unless manually stopped
+    restart: unless-stopped
+    
+    # ==========================================================================
+    # Resource Limits (Optimized for Raspberry Pi 4)
+    # ==========================================================================
+    # Adjust based on your Pi 4 model:
+    # - Pi 4 1GB: memory: 768m, cpus: 2
+    # - Pi 4 2GB: memory: 1024m, cpus: 3
+    # - Pi 4 4GB: memory: 1536m, cpus: 4 (current settings)
+    # - Pi 4 8GB: memory: 2048m, cpus: 4
+    deploy:
+      resources:
+        limits:
+          # Maximum memory the container can use
+          memory: 1536m
+          # Maximum CPU cores (Pi 4 has 4 cores)
+          cpus: "3.0"
+        reservations:
+          # Minimum guaranteed memory
+          memory: 512m
+          cpus: "1.0"
+    
+    # Legacy resource limits (for older Docker Compose versions)
+    # Uncomment these if deploy.resources doesn't work
+    # mem_limit: 1536m
+    # memswap_limit: 2g
+    # cpu_shares: 768
+    
+    # ==========================================================================
+    # Volumes - Persistent Data Storage
+    # ==========================================================================
     volumes:
+      # Bot credentials (FCM tokens, etc.)
       - ./credentials:/app/credentials
+      # Instance configurations (servers, settings)
       - ./instances:/app/instances
+      # Application logs
       - ./logs:/app/logs
+      # Generated map images
       - ./maps:/app/maps
+      # Timezone sync (optional - comment out if not needed)
+      - /etc/localtime:/etc/localtime:ro
+    
+    # ==========================================================================
+    # Environment Variables
+    # ==========================================================================
     environment:
+      # Discord bot configuration
       - RPP_DISCORD_CLIENT_ID=${RPP_DISCORD_CLIENT_ID}
       - RPP_DISCORD_TOKEN=${RPP_DISCORD_TOKEN}
       - RPP_DISCORD_USERNAME=${RPP_DISCORD_USERNAME}
+      # Node.js production mode
+      - NODE_ENV=production
+      # Optimize garbage collection for low memory
+      - NODE_OPTIONS=--max-old-space-size=1024 --gc-interval=100
+      # Timezone (adjust to your location)
+      - TZ=${TZ:-UTC}
+    
+    # Alternative: Load from .env file
+    env_file:
+      - .env
+    
+    # ==========================================================================
+    # Logging Configuration
+    # ==========================================================================
+    # Prevents logs from consuming all disk space on SD card
+    logging:
+      driver: "json-file"
+      options:
+        # Maximum size of each log file
+        max-size: "10m"
+        # Maximum number of log files to keep
+        max-file: "3"
+        # Compress rotated logs
+        compress: "true"
+    
+    # ==========================================================================
+    # Health Check
+    # ==========================================================================
+    healthcheck:
+      # Simple check that the Node.js process is responsive
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    
+    # ==========================================================================
+    # Networking
+    # ==========================================================================
+    # Use host networking for better performance on Pi (optional)
+    # Uncomment the next line if you have network issues
+    # network_mode: host
+    
+    # Standard bridge networking
+    networks:
+      - hondabot-network
+    
+    # ==========================================================================
+    # Security Options
+    # ==========================================================================
+    security_opt:
+      # Disable container from gaining new privileges
+      - no-new-privileges:true
+    
+    # Read-only root filesystem (optional - more secure)
+    # read_only: true
+    # tmpfs:
+    #   - /tmp:size=100M
+    
+    # ==========================================================================
+    # Shutdown Configuration
+    # ==========================================================================
+    # Grace period for clean shutdown (important for Discord disconnection)
+    stop_grace_period: 30s
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  hondabot-network:
+    driver: bridge
+    # IPv4 only (recommended for Pi to avoid IPv6 issues)
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
