@@ -1,8 +1,10 @@
 # =============================================================================
 # Dockerfile for Raspberry Pi 4 (ARM64)
 # =============================================================================
-# Multi-stage build for smaller image size and better caching
-# Optimized for low-memory ARM64 devices like Raspberry Pi 4
+# Multi-stage build optimized for ARM64 devices like Raspberry Pi 4
+# - Pre-compiles TypeScript for faster startup and lower memory usage
+# - Uses slim base image to reduce size
+# - Runs as non-root user for security
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -24,14 +26,13 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including devDependencies for TypeScript compilation)
-# Using npm ci for reproducible builds from lock file
 RUN npm ci --include=dev
 
 # Copy source code
 COPY . .
 
-# Compile TypeScript if needed (validates the build)
-RUN npm run test || true
+# Compile TypeScript to JavaScript for production
+RUN npm run build
 
 # -----------------------------------------------------------------------------
 # Stage 2: Production Dependencies
@@ -40,10 +41,8 @@ FROM node:22-bookworm-slim AS deps
 
 WORKDIR /deps
 
-# Copy package files
 COPY package.json package-lock.json ./
 
-# Install only production dependencies
 RUN npm ci --omit=dev --ignore-scripts \
     && npm cache clean --force
 
@@ -52,61 +51,48 @@ RUN npm ci --omit=dev --ignore-scripts \
 # -----------------------------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime
 
-# Add labels for container identification
 LABEL org.opencontainers.image.title="HondaBot"
 LABEL org.opencontainers.image.description="Discord bot for Rust+ integration"
-LABEL org.opencontainers.image.vendor="HondaBot"
-LABEL maintainer="HondaBot"
 
-# Install runtime dependencies only
-# GraphicsMagick for image processing, ca-certificates for HTTPS
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     graphicsmagick \
     ca-certificates \
     dumb-init \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && rm -rf /var/tmp/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
+# Create non-root user
 RUN groupadd --gid 1000 hondabot \
     && useradd --uid 1000 --gid hondabot --shell /bin/bash --create-home hondabot
 
-# Set working directory
 WORKDIR /app
 
-# Copy production dependencies from deps stage
+# Copy production dependencies
 COPY --from=deps /deps/node_modules ./node_modules
 
-# Copy application code from builder stage
-COPY --from=builder /build/src ./src
-COPY --from=builder /build/config.js ./
-COPY --from=builder /build/index.ts ./
+# Copy compiled JavaScript
+COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
-COPY --from=builder /build/tsconfig.json ./
 
-# Create directories for persistent data with correct permissions
+# Copy runtime resources
+COPY --from=builder /build/src/resources ./src/resources
+COPY --from=builder /build/src/languages ./src/languages
+COPY --from=builder /build/config.j[s]* ./
+
+# Create data directories
 RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
     && chown -R hondabot:hondabot /app
 
-# Define volumes for persistent data
 VOLUME ["/app/credentials", "/app/instances", "/app/logs", "/app/maps"]
 
-# Set environment variables for production
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-# Switch to non-root user
 USER hondabot
 
-# Health check - verify Node.js process is running
-# Checks every 30 seconds, allows 10 second timeout, starts checking after 60 seconds
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
     CMD node -e "console.log('healthy')" || exit 1
 
-# Use dumb-init for proper signal handling (important for graceful shutdown)
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
-# Run the bot
-CMD ["node", "-r", "ts-node/register", "."]
+CMD ["node", "dist/index.js"]
