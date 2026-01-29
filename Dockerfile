@@ -32,7 +32,7 @@ RUN npm ci --include=dev
 COPY . .
 
 # Compile TypeScript to JavaScript for production
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 # -----------------------------------------------------------------------------
 # Stage 2: Production Dependencies
