@@ -150,6 +150,7 @@ cmd_clean() {
     
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         docker compose -f "$COMPOSE_FILE" down --rmi local
+        docker builder prune -f --filter "until=24h"
         print_success "Cleaned up container and image."
     else
         echo "Cancelled."
@@ -163,7 +164,8 @@ cmd_clean_all() {
     read -p "Are you REALLY sure? (type 'yes' to confirm): " confirm
     
     if [[ "$confirm" == "yes" ]]; then
-        docker compose -f "$COMPOSE_FILE" down --rmi local -v
+        docker compose -f "$COMPOSE_FILE" down --rmi local -v --remove-orphans
+        docker builder prune -af
         print_success "Cleaned up everything."
     else
         echo "Cancelled."
