@@ -63,8 +63,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN groupadd --gid 1000 hondabot \
-    && useradd --uid 1000 --gid hondabot --shell /bin/bash --create-home hondabot
+RUN groupadd --gid 1001 hondabot \
+    && useradd --uid 1001 --gid hondabot --shell /bin/bash --create-home hondabot
 
 WORKDIR /app
 
