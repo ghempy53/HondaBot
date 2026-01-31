@@ -77,7 +77,7 @@ COPY --from=builder /build/package.json ./
 
 # Copy runtime resources
 COPY --from=builder /build/src/resources ./src/resources
-COPY --from=builder /build/src/languages ./src/languages
+COPY --from=builder /build/src/languages ./dist/src/languages
 
 # Create data directories
 RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
