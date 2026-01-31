@@ -75,9 +75,10 @@ COPY --from=deps /deps/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/package.json ./
 
-# Copy runtime resources
-COPY --from=builder /build/src/resources ./src/resources
+# Copy runtime resources (must be in dist/src/ to match compiled code paths)
+COPY --from=builder /build/src/resources ./dist/src/resources
 COPY --from=builder /build/src/languages ./dist/src/languages
+COPY --from=builder /build/src/staticFiles ./dist/src/staticFiles
 
 # Create data directories
 RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
