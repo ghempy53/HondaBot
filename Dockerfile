@@ -79,6 +79,7 @@ COPY --from=builder /build/package.json ./
 COPY --from=builder /build/src/resources ./dist/src/resources
 COPY --from=builder /build/src/languages ./dist/src/languages
 COPY --from=builder /build/src/staticFiles ./dist/src/staticFiles
+COPY --from=builder /build/src/templates ./dist/src/templates
 
 # Create data directories
 RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
