@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 # Configuration
 CONTAINER_NAME="HondaBot"
 COMPOSE_FILE="docker-compose.yml"
-SCRIPT_VERSION="2.0.0"
+SCRIPT_VERSION="2.0.1"
 
 # Helper functions
 print_header() {
@@ -174,14 +174,30 @@ cmd_build() {
     
     # Try with BuildKit first (better caching and output)
     print_step "Building with Docker BuildKit..."
-    if DOCKER_BUILDKIT=1 docker compose -f "$COMPOSE_FILE" build --no-cache 2>&1; then
-        echo ""
+    
+    # Run build with proper terminal handling
+    DOCKER_BUILDKIT=1 docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+    local build_status=$?
+    
+    # Force terminal reset and newline
+    printf "\n"
+    stty sane 2>/dev/null || true
+    
+    if [[ $build_status -eq 0 ]]; then
         print_success "Build completed successfully!"
+        echo ""
     else
-        print_warning "BuildKit build failed, trying without BuildKit..."
-        if DOCKER_BUILDKIT=0 docker compose -f "$COMPOSE_FILE" build --no-cache 2>&1; then
-            echo ""
+        print_warning "BuildKit build failed (exit code: $build_status), trying without BuildKit..."
+        
+        DOCKER_BUILDKIT=0 docker compose -f "$COMPOSE_FILE" build --no-cache
+        build_status=$?
+        
+        printf "\n"
+        stty sane 2>/dev/null || true
+        
+        if [[ $build_status -eq 0 ]]; then
             print_success "Build completed successfully!"
+            echo ""
         else
             print_error "Build failed! Check the error messages above."
             echo ""
@@ -204,10 +220,16 @@ cmd_build_verbose() {
     echo ""
     
     # Build with full progress output
-    DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+    DOCKER_BUILDKIT=1 docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+    local build_status=$?
     
-    if [[ $? -eq 0 ]]; then
+    # Force terminal reset and newline
+    printf "\n"
+    stty sane 2>/dev/null || true
+    
+    if [[ $build_status -eq 0 ]]; then
         print_success "Build completed successfully!"
+        echo ""
     else
         print_error "Build failed!"
         exit 1
