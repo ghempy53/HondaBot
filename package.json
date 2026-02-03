@@ -8,7 +8,6 @@
         "start:dev": "node --max-old-space-size=1536 -r ts-node/register .",
         "build": "tsc -p .",
         "build:watch": "tsc -p . --watch",
-        "preinstall": "npx npm-force-resolutions",
         "test": "tsc --noEmit -p .",
         "clean": "rm -rf dist",
         "rebuild": "npm run clean && npm run build"
@@ -46,7 +45,10 @@
     "devDependencies": {
         "@types/node": "^22.10.0"
     },
-    "resolutions": {
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "overrides": {
         "jpeg-js": "0.4.4",
         "protobufjs": "7.4.0"
     }

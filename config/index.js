@@ -33,7 +33,6 @@ module.exports = {
         clientId: process.env.RPP_DISCORD_CLIENT_ID || '',
         token: process.env.RPP_DISCORD_TOKEN || '',
         // FIX: Properly parse boolean - default to true unless explicitly set to 'false'
-        // If true, only admins can delete (server, switch..), manage credentials and reset a channel
         needAdminPrivileges: process.env.RPP_NEED_ADMIN_PRIVILEGES !== 'false',
     }
 };
