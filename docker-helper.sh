@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 # Configuration
 CONTAINER_NAME="HondaBot"
 COMPOSE_FILE="docker-compose.yml"
-SCRIPT_VERSION="2.0.1"
+SCRIPT_VERSION="2.1.0"
 
 # Helper functions
 print_header() {

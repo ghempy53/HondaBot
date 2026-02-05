@@ -1,4 +1,4 @@
-# HondaBot
+# HondaBot v2.1
 
 A NodeJS Discord Bot that uses the [rustplus.js](https://github.com/liamcottle/rustplus.js) library to utilize the power of the Rust+ Companion App with additional Quality-of-Life features. Modified from [rustplusplus](https://github.com/alexemanuelol/rustplusplus).
 
@@ -13,7 +13,7 @@ A NodeJS Discord Bot that uses the [rustplus.js](https://github.com/liamcottle/r
 - Keep track of other teams on the server with the Battlemetrics Player Tracker
 - Many QoL commands that can be used In-Game or from Discord
 
-For detailed documentation, see the [full documentation](https://github.com/alexemanuelol/rustplusplus/blob/master/docs/documentation.md).
+For detailed documentation, see the [full documentation](docs/documentation.md).
 
 ## Prerequisites
 
@@ -21,8 +21,9 @@ For detailed documentation, see the [full documentation](https://github.com/alex
 - Raspberry Pi OS (64-bit)
 - Docker and Docker Compose
 - Git
+- Node.js 22+ (handled by Docker)
 - Discord Bot Token ([Discord Developer Portal](https://discord.com/developers/applications))
-- Rust+ Credentials ([rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application/releases/download/v1.4.0/rustplusplus-1.4.0-win-x64.exe))
+- Rust+ Credentials ([rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application))
 
 ## Installation
 
@@ -39,7 +40,7 @@ Log out and back in for group changes to take effect.
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/HondaBot.git
+git clone https://github.com/ghempy53/HondaBot.git
 cd HondaBot
 ```
 
@@ -93,7 +94,6 @@ sudo nano /etc/docker/daemon.json
 {
     "ipv6": false,
     "ip6tables": false,
-    "fixed-cidr-v6": "",
     "dns": ["8.8.8.8", "8.8.4.4"]
 }
 ```
@@ -114,18 +114,28 @@ sudo systemctl restart docker
 | Command | Description |
 |---------|-------------|
 | `./docker-helper.sh build` | Build the Docker image |
+| `./docker-helper.sh build-verbose` | Build with full output (for debugging) |
 | `./docker-helper.sh start` | Start the container |
 | `./docker-helper.sh stop` | Stop the container |
 | `./docker-helper.sh restart` | Restart the container |
+| `./docker-helper.sh rebuild` | Stop, rebuild, and start (fresh build) |
 | `./docker-helper.sh logs` | View logs (follow mode) |
 | `./docker-helper.sh logs-tail` | View last 100 log lines |
+| `./docker-helper.sh logs-error` | Show only error logs |
 | `./docker-helper.sh status` | Show container status |
 | `./docker-helper.sh health` | Check health and resource usage |
+| `./docker-helper.sh stats` | Show live resource usage |
 | `./docker-helper.sh shell` | Open shell in container |
+| `./docker-helper.sh exec <cmd>` | Execute a command in the container |
 | `./docker-helper.sh backup` | Backup persistent data |
 | `./docker-helper.sh update` | Pull latest code and rebuild |
 | `./docker-helper.sh clean` | Remove container and image |
+| `./docker-helper.sh clean-all` | Remove everything including volumes |
+| `./docker-helper.sh diagnose` | Run full diagnostic check |
 | `./docker-helper.sh fix-ipv6` | Apply IPv6 fix for Raspberry Pi |
+| `./docker-helper.sh fix-permissions` | Fix file permissions |
+| `./docker-helper.sh validate` | Validate configuration files |
+| `./docker-helper.sh version` | Show version information |
 
 ## Manual Docker Commands
 
@@ -236,9 +246,91 @@ Check health status and logs:
 ./docker-helper.sh logs-tail
 ```
 
+### Run diagnostics
+
+For comprehensive troubleshooting:
+
+```bash
+./docker-helper.sh diagnose
+```
+
+## Discord Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/alarm` | Operations on Smart Alarms |
+| `/alias` | Create an alias for a command/sequence of characters |
+| `/blacklist` | Blacklist a user from using the bot |
+| `/cctv` | Get CCTV camera codes for monuments |
+| `/craft` | Display the cost to craft an item |
+| `/credentials` | Setup Credentials |
+| `/decay` | Display the decay time of an item |
+| `/help` | Get help message |
+| `/item` | Get the details of an item |
+| `/leader` | Transfer leadership |
+| `/map` | Display the In-Game Map |
+| `/market` | Search for or subscribe to items in vending machines |
+| `/players` | Get Battlemetrics data on all connected players |
+| `/recycle` | Display the output of recycling an item |
+| `/research` | Display the cost to research an item |
+| `/reset` | Reset Discord Channels |
+| `/role` | Setup a specific role to use the bot |
+| `/storagemonitor` | Operations on Storage Monitors |
+| `/switch` | Operations on Smart Switches |
+| `/upkeep` | Get the upkeep cost of an item |
+| `/uptime` | Get the current uptime |
+| `/voice` | Voice channel operations |
+
+## In-Game Commands
+
+| Command | Description |
+|---------|-------------|
+| `!afk` | Display AFK teammates |
+| `!alive` | Display who has been alive longest |
+| `!cargo` | Display Cargoship information |
+| `!chinook` | Display Chinook 47 information |
+| `!connections` | Display latest team connections |
+| `!craft` | Display the cost to craft an item |
+| `!deaths` | Display latest deaths |
+| `!decay` | Display the decay time of an item |
+| `!events` | Get recent events |
+| `!heli` | Get Patrol Helicopter information |
+| `!large` | Get Large Oil Rig information |
+| `!leader` | Transfer leadership |
+| `!marker` | Set markers to navigate to |
+| `!market` | Search for items in vending machines |
+| `!mute` | Mute bot In-Game |
+| `!notes` | Add notes |
+| `!offline` | Display offline teammates |
+| `!online` | Display online teammates |
+| `!players` | Get Battlemetrics player information |
+| `!pop` | Get server population |
+| `!prox` | Display nearby teammates |
+| `!recycle` | Display recycling output |
+| `!research` | Display research cost |
+| `!send` | Send a message to Discord |
+| `!small` | Get Small Oil Rig information |
+| `!steamid` | Get teammate steamid |
+| `!team` | Get team information |
+| `!time` | Get In-Game time |
+| `!timer` | Setup timers |
+| `!tr` | Translate text |
+| `!tts` | Text-To-Speech |
+| `!unmute` | Unmute bot In-Game |
+| `!upkeep` | Check Tool Cupboard upkeep |
+| `!uptime` | Display uptime |
+| `!vendor` | Get Traveling Vendor information |
+| `!wipe` | Display time since wipe |
+
 ## Credentials
 
-Get your Rust+ credentials by running the [rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application/releases/download/v1.4.0/rustplusplus-1.4.0-win-x64.exe) on Windows.
+Get your Rust+ credentials by running the [rustplusplus credential application](https://github.com/alexemanuelol/rustplusplus-credential-application) on Windows.
+
+## Version Information
+
+- **HondaBot**: v2.1
+- **Node.js**: 22 (via Docker)
+- **Docker Helper Script**: v2.1
 
 ## License
 
