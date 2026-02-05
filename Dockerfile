@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Dependencies Builder
 # -----------------------------------------------------------------------------
-FROM node:22-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 
 # Install build dependencies needed for native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,7 +37,7 @@ RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 # -----------------------------------------------------------------------------
 # Stage 2: Production Dependencies
 # -----------------------------------------------------------------------------
-FROM node:22-bookworm-slim AS deps
+FROM node:24-bookworm-slim AS deps
 
 WORKDIR /deps
 
@@ -49,7 +49,7 @@ RUN npm ci --omit=dev --ignore-scripts \
 # -----------------------------------------------------------------------------
 # Stage 3: Final Runtime Image
 # -----------------------------------------------------------------------------
-FROM node:22-bookworm-slim AS runtime
+FROM node:24-bookworm-slim AS runtime
 
 LABEL org.opencontainers.image.title="HondaBot"
 LABEL org.opencontainers.image.description="Discord bot for Rust+ integration"
