@@ -18,7 +18,7 @@
 
 */
 
-const Colors = require("colors");
+const pc = require("picocolors");
 const Winston = require("winston");
 
 const Config = require('../../config');
@@ -68,14 +68,14 @@ class Logger {
                 });
 
                 console.log(
-                    Colors.green(`${time} `) +
-                    ((level === 'error') ? Colors.red(text) : Colors.yellow(text))
+                    pc.green(`${time} `) +
+                    ((level === 'error') ? pc.red(text) : pc.yellow(text))
                 );
 
                 if (level === 'error' && Config.general.showCallStackError) {
                     for (let line of (new Error().stack.split(/\r?\n/))) {
                         this.logger.log({ level: level, message: `${time} | ${line}` });
-                        console.log(Colors.green(`${time} `) + Colors.red(line));
+                        console.log(pc.green(`${time} `) + pc.red(line));
                     }
                 }
             } break;
@@ -89,10 +89,10 @@ class Logger {
                 });
 
                 console.log(
-                    Colors.green(`${time} `) +
-                    Colors.cyan(`${this.guildId} `) +
-                    Colors.white(`${this.serverName} `) +
-                    ((level === 'error') ? Colors.red(text) : Colors.yellow(text))
+                    pc.green(`${time} `) +
+                    pc.cyan(`${this.guildId} `) +
+                    pc.white(`${this.serverName} `) +
+                    ((level === 'error') ? pc.red(text) : pc.yellow(text))
                 );
 
                 if (level === 'error' && Config.general.showCallStackError) {
@@ -102,10 +102,10 @@ class Logger {
                             message: `${time} | ${this.guildId} | ${this.serverName} | ${line}`
                         });
                         console.log(
-                            Colors.green(`${time} `) +
-                            Colors.cyan(`${this.guildId} `) +
-                            Colors.white(`${this.serverName} `) +
-                            Colors.red(line));
+                            pc.green(`${time} `) +
+                            pc.cyan(`${this.guildId} `) +
+                            pc.white(`${this.serverName} `) +
+                            pc.red(line));
                     }
                 }
             } break;
