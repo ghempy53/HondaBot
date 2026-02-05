@@ -22,6 +22,18 @@ services:
           memory: 512m
           cpus: "1.0"
     
+    # DNS Configuration - Prevents DNS resolution failures from flooding network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    dns_search: .
+    
+    # Connection limits - Prevents NAT table exhaustion
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 2048
+    
     volumes:
       - ./credentials:/app/credentials
       - ./instances:/app/instances
