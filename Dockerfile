@@ -54,9 +54,8 @@ FROM node:22-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="HondaBot"
 LABEL org.opencontainers.image.description="Discord bot for Rust+ integration"
 
-# Install runtime dependencies
+# Install runtime dependencies (sharp includes its own libvips)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    graphicsmagick \
     ca-certificates \
     dumb-init \
     && apt-get clean \
