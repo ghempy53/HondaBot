@@ -20,7 +20,10 @@ NC='\033[0m' # No Color
 # Configuration
 CONTAINER_NAME="HondaBot"
 COMPOSE_FILE="docker-compose.yml"
-SCRIPT_VERSION="2.1.0"
+SCRIPT_VERSION="2.2.0"
+
+# Enable BuildKit for faster builds with better caching
+export DOCKER_BUILDKIT=1
 
 # Helper functions
 print_header() {
@@ -172,11 +175,11 @@ cmd_build() {
     check_env_file || print_warning "Continuing anyway, but bot may fail to start..."
     echo ""
     
-    # Try with BuildKit first (better caching and output)
+    # Build with BuildKit (enabled globally for better caching)
     print_step "Building with Docker BuildKit..."
-    
+
     # Run build with proper terminal handling
-    DOCKER_BUILDKIT=1 docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+    docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
     local build_status=$?
     
     # Force terminal reset and newline
@@ -218,9 +221,9 @@ cmd_build_verbose() {
     
     check_env_file || print_warning "Continuing anyway..."
     echo ""
-    
-    # Build with full progress output
-    DOCKER_BUILDKIT=1 docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+
+    # Build with full progress output (BuildKit enabled globally)
+    docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
     local build_status=$?
     
     # Force terminal reset and newline
@@ -545,7 +548,19 @@ cmd_diagnose() {
         ((issues++))
     fi
     echo ""
-    
+
+    # Check BuildKit
+    print_step "Checking Docker BuildKit..."
+    if docker buildx version > /dev/null 2>&1; then
+        print_success "Docker BuildKit is available"
+        buildx_version=$(docker buildx version 2>/dev/null | head -1)
+        echo "  $buildx_version"
+        echo "  DOCKER_BUILDKIT=$DOCKER_BUILDKIT"
+    else
+        print_warning "Docker BuildKit not available (builds may be slower)"
+    fi
+    echo ""
+
     # Check environment file
     print_step "Checking environment file..."
     if check_env_file; then

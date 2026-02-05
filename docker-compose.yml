@@ -1,12 +1,18 @@
 # =============================================================================
 # Docker Compose Configuration for Raspberry Pi 4
 # =============================================================================
+# Build with: DOCKER_BUILDKIT=1 docker compose build
+# Or set in shell: export DOCKER_BUILDKIT=1
+# =============================================================================
 
 services:
   hondabot:
     build:
       context: .
       dockerfile: Dockerfile
+      # BuildKit optimizations for faster Raspberry Pi builds
+      args:
+        BUILDKIT_INLINE_CACHE: 1
     image: hondabot:latest
     container_name: HondaBot
     hostname: hondabot

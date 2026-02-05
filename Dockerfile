@@ -1,18 +1,23 @@
+# syntax=docker/dockerfile:1
+
 # =============================================================================
 # Dockerfile for Raspberry Pi 4 (ARM64)
 # =============================================================================
 # Multi-stage build optimized for ARM64 devices like Raspberry Pi 4
+# - Uses BuildKit cache mounts for faster rebuilds
 # - Pre-compiles TypeScript for faster startup and lower memory usage
 # - Uses slim base image to reduce size
 # - Runs as non-root user for security
+#
+# Build with: DOCKER_BUILDKIT=1 docker build -t hondabot .
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage 1: Dependencies Builder
+# Stage 1: Build base with common dependencies
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS base
 
-# Install build dependencies needed for native modules
+# Install build dependencies needed for native modules (sharp, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
@@ -20,13 +25,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# -----------------------------------------------------------------------------
+# Stage 2: Dependencies & Build
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
 WORKDIR /build
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
 
-# Install all dependencies (including devDependencies for TypeScript compilation)
-RUN npm ci --include=dev
+# Install all dependencies with BuildKit cache mount for npm
+# This dramatically speeds up rebuilds by caching downloaded packages
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm ci --include=dev
 
 # Copy source code
 COPY . .
@@ -35,19 +47,21 @@ COPY . .
 RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 # -----------------------------------------------------------------------------
-# Stage 2: Production Dependencies
+# Stage 3: Production Dependencies
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS deps
+FROM base AS deps
 
 WORKDIR /deps
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --omit=dev --ignore-scripts \
-    && npm cache clean --force
+# Install production deps with cache mount
+# Note: Cannot use --ignore-scripts as sharp needs post-install on ARM64
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm ci --omit=dev
 
 # -----------------------------------------------------------------------------
-# Stage 3: Final Runtime Image
+# Stage 4: Final Runtime Image
 # -----------------------------------------------------------------------------
 FROM node:24-bookworm-slim AS runtime
 
