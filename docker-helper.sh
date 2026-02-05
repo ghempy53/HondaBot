@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 # Configuration
 CONTAINER_NAME="HondaBot"
 COMPOSE_FILE="docker-compose.yml"
-SCRIPT_VERSION="2.2.0"
+SCRIPT_VERSION="2.3.0"
 
 # Enable BuildKit for faster builds with better caching
 export DOCKER_BUILDKIT=1
@@ -149,9 +149,10 @@ show_help() {
     echo "  shell           Open a shell in the container"
     echo "  exec <cmd>      Execute a command in the container"
     echo "  backup          Backup persistent data"
-    echo "  clean           Remove container and image"
-    echo "  clean-all       Remove everything including volumes"
+    echo "  clean           Remove container, image, and build cache"
+    echo "  clean-all       Remove EVERYTHING (images, volumes, cache)"
     echo "  update          Pull latest code and rebuild"
+    echo "  update-packages Update system packages (apt)"
     echo ""
     echo -e "${CYAN}Troubleshooting Commands:${NC}"
     echo "  diagnose        Run full diagnostic check"
@@ -389,13 +390,46 @@ cmd_exec() {
 # Clean up
 cmd_clean() {
     print_header
-    print_warning "This will remove the container and image."
+    print_warning "This will remove the HondaBot container, image, and related Docker artifacts."
+    echo ""
+    echo "What will be removed:"
+    echo "  - HondaBot container"
+    echo "  - HondaBot image (hondabot:latest)"
+    echo "  - Dangling images (untagged)"
+    echo "  - Build cache older than 24h"
+    echo "  - Unused networks"
+    echo ""
     read -p "Are you sure? (y/N): " confirm
-    
+
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        docker compose -f "$COMPOSE_FILE" down --rmi local 2>/dev/null || true
-        docker builder prune -f --filter "until=24h"
-        print_success "Cleaned up container and image."
+        echo ""
+
+        # Stop and remove container
+        print_step "Stopping and removing container..."
+        docker compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
+
+        # Remove HondaBot image specifically
+        print_step "Removing HondaBot image..."
+        docker rmi hondabot:latest 2>/dev/null || true
+        docker rmi "${CONTAINER_NAME,,}:latest" 2>/dev/null || true
+
+        # Remove dangling images
+        print_step "Removing dangling images..."
+        docker image prune -f 2>/dev/null || true
+
+        # Prune build cache older than 24h
+        print_step "Cleaning build cache..."
+        docker builder prune -f --filter "until=24h" 2>/dev/null || true
+
+        # Clean unused networks
+        print_step "Removing unused networks..."
+        docker network prune -f 2>/dev/null || true
+
+        echo ""
+        print_success "Cleaned up container and image!"
+        echo ""
+        print_info "Note: Volumes and base images (node:18) preserved."
+        echo "      Use 'clean-all' to remove everything."
     else
         echo "Cancelled."
     fi
@@ -404,13 +438,57 @@ cmd_clean() {
 # Clean everything including volumes
 cmd_clean_all() {
     print_header
-    print_error "WARNING: This will remove ALL data including credentials and instances!"
+    print_error "WARNING: This will perform a COMPLETE Docker cleanup!"
+    echo ""
+    echo "What will be removed:"
+    echo "  - HondaBot container and ALL related containers"
+    echo "  - HondaBot image AND base images (node:18, etc.)"
+    echo "  - ALL dangling and unused images"
+    echo "  - ALL Docker volumes (including persistent data)"
+    echo "  - ALL build cache"
+    echo "  - ALL unused networks"
+    echo ""
+    print_error "This CANNOT be undone! Data in volumes will be LOST!"
+    echo ""
     read -p "Are you REALLY sure? (type 'yes' to confirm): " confirm
-    
+
     if [[ "$confirm" == "yes" ]]; then
-        docker compose -f "$COMPOSE_FILE" down --rmi local -v --remove-orphans 2>/dev/null || true
-        docker builder prune -af
-        print_success "Cleaned up everything."
+        echo ""
+
+        # Stop and remove container with volumes
+        print_step "Stopping and removing container with volumes..."
+        docker compose -f "$COMPOSE_FILE" down -v --remove-orphans 2>/dev/null || true
+
+        # Remove HondaBot image specifically
+        print_step "Removing HondaBot image..."
+        docker rmi hondabot:latest 2>/dev/null || true
+        docker rmi "${CONTAINER_NAME,,}:latest" 2>/dev/null || true
+
+        # Remove ALL unused images (including base images)
+        print_step "Removing all unused images..."
+        docker image prune -af 2>/dev/null || true
+
+        # Remove all dangling volumes
+        print_step "Removing dangling volumes..."
+        docker volume prune -f 2>/dev/null || true
+
+        # Prune ALL build cache
+        print_step "Cleaning all build cache..."
+        docker builder prune -af 2>/dev/null || true
+
+        # Clean ALL unused networks
+        print_step "Removing all unused networks..."
+        docker network prune -f 2>/dev/null || true
+
+        # Show what's left
+        echo ""
+        print_success "Complete Docker cleanup finished!"
+        echo ""
+        print_info "Remaining Docker resources:"
+        echo "  Images:     $(docker images -q 2>/dev/null | wc -l)"
+        echo "  Containers: $(docker ps -aq 2>/dev/null | wc -l)"
+        echo "  Volumes:    $(docker volume ls -q 2>/dev/null | wc -l)"
+        echo "  Networks:   $(docker network ls -q 2>/dev/null | wc -l)"
     else
         echo "Cancelled."
     fi
@@ -806,18 +884,80 @@ cmd_validate() {
     fi
 }
 
+# Update system packages
+cmd_update_packages() {
+    print_header
+    echo "Update System Packages"
+    echo ""
+    print_info "This will update system packages on your Raspberry Pi."
+    echo ""
+    echo "Options:"
+    echo "  1) Update package lists only (apt update)"
+    echo "  2) Update and upgrade all packages (apt update && apt upgrade)"
+    echo "  3) Full upgrade with Docker updates (apt update && apt full-upgrade)"
+    echo "  4) Cancel"
+    echo ""
+    read -p "Select option (1-4): " choice
+
+    case "$choice" in
+        1)
+            print_step "Updating package lists..."
+            sudo apt update
+            echo ""
+            print_success "Package lists updated!"
+            echo ""
+            print_info "Upgradable packages:"
+            apt list --upgradable 2>/dev/null | head -20 || true
+            ;;
+        2)
+            print_step "Updating package lists..."
+            sudo apt update
+            echo ""
+            print_step "Upgrading packages..."
+            sudo apt upgrade -y
+            echo ""
+            print_success "Packages upgraded!"
+            ;;
+        3)
+            print_step "Updating package lists..."
+            sudo apt update
+            echo ""
+            print_step "Performing full upgrade..."
+            sudo apt full-upgrade -y
+            echo ""
+            print_step "Cleaning up old packages..."
+            sudo apt autoremove -y
+            sudo apt autoclean
+            echo ""
+            print_success "Full upgrade completed!"
+            echo ""
+            print_warning "A reboot may be required for kernel updates."
+            echo "  Check with: sudo needrestart 2>/dev/null || echo 'Install needrestart for reboot check'"
+            ;;
+        4|*)
+            echo "Cancelled."
+            return 0
+            ;;
+    esac
+
+    # Show Docker version after update
+    echo ""
+    print_info "Current Docker version:"
+    docker --version 2>/dev/null || echo "  Docker not installed"
+}
+
 # Show version
 cmd_version() {
     print_header
     echo ""
     echo "Script Version: $SCRIPT_VERSION"
     echo ""
-    
+
     if [[ -f "package.json" ]]; then
         app_version=$(node -p "require('./package.json').version" 2>/dev/null || echo "unknown")
         echo "HondaBot Version: $app_version"
     fi
-    
+
     echo ""
     docker --version 2>/dev/null || echo "Docker: not installed"
     docker compose version 2>/dev/null || echo "Docker Compose: not installed"
@@ -893,6 +1033,9 @@ case "${1:-help}" in
         ;;
     validate)
         cmd_validate
+        ;;
+    update-packages)
+        cmd_update_packages
         ;;
     version)
         cmd_version
