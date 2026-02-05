@@ -84,8 +84,10 @@ module.exports = {
         const verifyId = Math.floor(100000 + Math.random() * 900000);
         client.logInteraction(interaction, verifyId, 'slashCommand');
 
+        // Defer immediately to prevent timeout
+        await interaction.deferReply({ flags: 64 });  // 64 = Ephemeral flag
+
         if (!await client.validatePermissions(interaction)) return;
-        await interaction.deferReply({ ephemeral: true });
 
         switch (interaction.options.getSubcommand()) {
             case 'add': {
