@@ -10,7 +10,8 @@
         "build:watch": "tsc -p . --watch",
         "test": "tsc --noEmit -p .",
         "clean": "rm -rf dist",
-        "rebuild": "npm run clean && npm run build"
+        "rebuild": "npm run clean && npm run build",
+        "postinstall": "cp patches/rustplus.proto node_modules/@liamcottle/rustplus.js/rustplus.proto"
     },
     "repository": {
         "type": "git",
