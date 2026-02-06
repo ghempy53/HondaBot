@@ -92,4 +92,6 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.28.0.0/16
+        # /24 is sufficient for a single-container setup and avoids bloating
+        # iptables/conntrack tables that conflict with Tailscale on Pi 4
+        - subnet: 172.28.0.0/24
