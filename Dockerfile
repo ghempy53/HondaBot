@@ -54,9 +54,11 @@ FROM base AS deps
 WORKDIR /deps
 
 COPY package.json package-lock.json ./
+COPY patches/ ./patches/
 
 # Install production deps with cache mount
 # Note: Cannot use --ignore-scripts as sharp needs post-install on ARM64
+# Note: patches/ is needed for the postinstall script that patches rustplus.proto
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci --omit=dev
 
