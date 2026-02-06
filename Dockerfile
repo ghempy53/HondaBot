@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     g++ \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g npm@11.9.0
 
 # -----------------------------------------------------------------------------
 # Stage 2: Dependencies & Build
@@ -32,8 +33,10 @@ FROM base AS builder
 
 WORKDIR /build
 
-# Copy package files first for better layer caching
+# Copy package files and patches for better layer caching
+# Note: patches/ is needed for the postinstall script that patches rustplus.proto
 COPY package.json package-lock.json ./
+COPY patches/ ./patches/
 
 # Install all dependencies with BuildKit cache mount for npm
 # This dramatically speeds up rebuilds by caching downloaded packages
