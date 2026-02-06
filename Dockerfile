@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Build base with common dependencies
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 
 # Install build dependencies needed for native modules (sharp, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -68,7 +68,7 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked \
 # -----------------------------------------------------------------------------
 # Stage 4: Final Runtime Image
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 
 LABEL org.opencontainers.image.title="HondaBot"
 LABEL org.opencontainers.image.description="Discord bot for Rust+ integration"
