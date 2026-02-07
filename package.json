@@ -11,7 +11,7 @@
         "test": "tsc --noEmit -p .",
         "clean": "rm -rf dist",
         "rebuild": "npm run clean && npm run build",
-        "postinstall": "cp patches/rustplus.proto node_modules/@liamcottle/rustplus.js/rustplus.proto"
+        "postinstall": "cp patches/rustplus.proto node_modules/@liamcottle/rustplus.js/rustplus.proto && cp patches/rustplus.js node_modules/@liamcottle/rustplus.js/rustplus.js"
     },
     "repository": {
         "type": "git",
