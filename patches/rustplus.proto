@@ -298,9 +298,9 @@ message AppTeamInfo {
 	}
 
 	message Note {
-		required int32 type = 2;
-		required float x = 3;
-		required float y = 4;
+		optional int32 type = 2;
+		optional float x = 3;
+		optional float y = 4;
 	}
 }
 
