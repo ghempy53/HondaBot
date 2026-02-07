@@ -168,7 +168,7 @@ module.exports = {
                         const orderCurrencyId = (Object.keys(client.items.items)
                             .includes(order.currencyId.toString())) ? order.currencyId : null;
                         const orderCostPerItem = order.costPerItem;
-                        const orderAmountInStock = order.amountInStock;
+                        const orderAmountInStock = order.amountInStock ?? 0;
                         const orderItemIsBlueprint = order.itemIsBlueprint;
                         const orderCurrencyIsBlueprint = order.currencyIsBlueprint;
 

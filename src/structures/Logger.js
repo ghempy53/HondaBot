@@ -37,6 +37,10 @@ class Logger {
         this.type = type;
         this.guildId = null;
         this.serverName = null;
+
+        /* Deduplication state to suppress repeated identical log messages */
+        this._lastLogKey = null;
+        this._lastRepeatCount = 0;
     }
 
     setGuildId(guildId) {
@@ -56,8 +60,45 @@ class Logger {
         return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
     }
 
+    _flushRepeat(time) {
+        if (this._lastRepeatCount <= 0) return;
+
+        const msg = `... repeated ${this._lastRepeatCount} more time${this._lastRepeatCount > 1 ? 's' : ''}`;
+
+        switch (this.type) {
+            case 'default': {
+                this.logger.log({ level: 'info', message: `${time} | ${msg}` });
+                console.log(pc.green(`${time} `) + pc.yellow(msg));
+            } break;
+
+            case 'guild': {
+                this.logger.log({
+                    level: 'info',
+                    message: `${time} | ${this.guildId} | ${this.serverName} | ${msg}`
+                });
+                console.log(
+                    pc.green(`${time} `) +
+                    pc.cyan(`${this.guildId} `) +
+                    pc.white(`${this.serverName} `) +
+                    pc.yellow(msg));
+            } break;
+        }
+
+        this._lastRepeatCount = 0;
+    }
+
     log(title, text, level) {
         let time = this.getTime();
+
+        /* Deduplicate consecutive identical log messages */
+        const logKey = `${title}|${text}|${level}`;
+        if (logKey === this._lastLogKey) {
+            this._lastRepeatCount++;
+            return;
+        }
+        this._flushRepeat(time);
+        this._lastLogKey = logKey;
+        this._lastRepeatCount = 0;
 
         switch (this.type) {
             case 'default': {
