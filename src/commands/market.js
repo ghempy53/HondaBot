@@ -18,6 +18,7 @@
 
 */
 
+const Discord = require('discord.js');
 const Builder = require('@discordjs/builders');
 
 const Constants = require('../util/constants.js');
@@ -100,7 +101,7 @@ module.exports = {
         client.logInteraction(interaction, verifyId, 'slashCommand');
 
         if (!await client.validatePermissions(interaction)) return;
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: [Discord.MessageFlags.Ephemeral] });
 
         if (!rustplus || (rustplus && !rustplus.isOperational)) {
             const str = client.intlGet(interaction.guildId, 'notConnectedToRustServer');
@@ -399,7 +400,7 @@ module.exports = {
                                 inline: true
                             }]
                     })],
-                    ephemeral: true
+                    flags: [Discord.MessageFlags.Ephemeral]
                 });
 
                 rustplus.log(client.intlGet(interaction.guildId, 'infoCap'),

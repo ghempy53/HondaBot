@@ -28,7 +28,7 @@ module.exports = {
         const instance = client.getInstance(interaction.guildId);
 
         /* Check so that the interaction comes from valid channels */
-        if (!Object.values(instance.channelId).includes(interaction.channelId) && !interaction.isCommand) {
+        if (!Object.values(instance.channelId).includes(interaction.channelId) && !interaction.isCommand()) {
             client.log(client.intlGet(null, 'warningCap'), client.intlGet(null, 'interactionInvalidChannel'))
             if (interaction.isButton()) {
                 try {
@@ -39,6 +39,7 @@ module.exports = {
                         client.intlGet(null, 'couldNotDeferInteraction'), 'error');
                 }
             }
+            return;
         }
 
         if (interaction.isButton()) {
