@@ -336,7 +336,7 @@ message AppMarker {
 		required int32 quantity = 2;
 		required int32 currencyId = 3;
 		required int32 costPerItem = 4;
-		required int32 amountInStock = 5;
+		optional int32 amountInStock = 5;
 		optional bool itemIsBlueprint = 6;
 		optional bool currencyIsBlueprint = 7;
 		optional float itemCondition = 8;
