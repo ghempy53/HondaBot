@@ -155,6 +155,8 @@ class RustPlus extends RustPlusLib {
             this.leaderRustPlusInstance = null;
         }
 
+        if (this.team === null) return;
+
         const instance = Client.client.getInstance(this.guildId);
         const leader = this.team.leaderSteamId;
         if (leader === this.playerId) return;
