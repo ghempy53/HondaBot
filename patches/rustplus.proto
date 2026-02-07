@@ -291,7 +291,7 @@ message AppTeamInfo {
 		required string name = 2;
 		required float x = 3;
 		required float y = 4;
-		required bool isOnline = 5;
+		optional bool isOnline = 5;
 		required uint32 spawnTime = 6;
 		required bool isAlive = 7;
 		required uint32 deathTime = 8;
