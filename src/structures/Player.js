@@ -28,7 +28,7 @@ class Player {
         this._name = player.name;
         this._x = player.x;
         this._y = player.y;
-        this._isOnline = player.isOnline;
+        this._isOnline = player.isOnline ?? false;
         this._spawnTime = player.spawnTime;
         this._isAlive = player.isAlive;
         this._deathTime = player.deathTime;
@@ -129,7 +129,7 @@ class Player {
         this.name = player.name;
         this.x = player.x;
         this.y = player.y;
-        this.isOnline = player.isOnline;
+        this.isOnline = player.isOnline ?? false;
         this.spawnTime = player.spawnTime;
         this.isAlive = player.isAlive;
         this.deathTime = player.deathTime;
