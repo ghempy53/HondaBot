@@ -32,7 +32,7 @@ module.exports = {
             client.log(client.intlGet(null, 'warningCap'), client.intlGet(null, 'interactionInvalidChannel'))
             if (interaction.isButton()) {
                 try {
-                    interaction.deferUpdate();
+                    await interaction.deferUpdate();
                 }
                 catch (e) {
                     client.log(client.intlGet(null, 'errorCap'),
@@ -73,7 +73,7 @@ module.exports = {
 
             if (interaction.isButton()) {
                 try {
-                    interaction.deferUpdate();
+                    await interaction.deferUpdate();
                 }
                 catch (e) {
                     client.log(client.intlGet(null, 'errorCap'),
