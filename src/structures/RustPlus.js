@@ -662,6 +662,7 @@ class RustPlus extends RustPlusLib {
     /* Commands */
 
     getCommandAfk() {
+        if (this.team === null) return null;
         let string = '';
         for (const player of this.team.players) {
             if (player.isOnline) {
@@ -675,6 +676,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandAlive(command) {
+        if (this.team === null) return null;
         const prefix = this.generalSettings.prefix;
         const commandAlive = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxAlive')}`;
         const commandAliveEn = `${prefix}${Client.client.intlGet('en', 'commandSyntaxAlive')}`;
@@ -711,6 +713,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandCargo(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         let unhandled = this.mapMarkers.cargoShips.map(e => e.id);
         for (const [id, timer] of Object.entries(this.mapMarkers.cargoShipEgressTimers)) {
@@ -791,6 +794,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandChinook(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         for (const ch47 of this.mapMarkers.ch47s) {
             if (ch47.ch47Type === 'crate') {
@@ -975,6 +979,7 @@ class RustPlus extends RustPlusLib {
     }
 
     async getCommandDeath(command, callerSteamId) {
+        if (this.team === null) return null;
         const prefix = this.generalSettings.prefix;
         const commandDeath = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxDeath')}`;
         const commandDeathEn = `${prefix}${Client.client.intlGet('en', 'commandSyntaxDeath')}`;
@@ -1374,6 +1379,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandHeli(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         for (const patrolHelicopter of this.mapMarkers.patrolHelicopters) {
             if (isInfoChannel) {
@@ -1439,6 +1445,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandLarge(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         if (this.mapMarkers.crateLargeOilRigTimer) {
             const time = Timer.getTimeLeftOfTimer(this.mapMarkers.crateLargeOilRigTimer);
@@ -1482,6 +1489,7 @@ class RustPlus extends RustPlusLib {
     }
 
     async getCommandLeader(command, callerSteamId) {
+        if (this.team === null) return null;
         const prefix = this.generalSettings.prefix;
         const commandLeader = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxLeader')}`;
         const commandLeaderEn = `${prefix}${Client.client.intlGet('en', 'commandSyntaxLeader')}`;
@@ -1580,6 +1588,7 @@ class RustPlus extends RustPlusLib {
     }
 
     async getCommandMarker(command, callerSteamId) {
+        if (this.team === null || this.info === null) return null;
         const prefix = this.generalSettings.prefix;
         const commandMarker = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxMarker')}`;
         const commandMarkerEn = `${prefix}${Client.client.intlGet('en', 'commandSyntaxMarker')}`;
@@ -1687,6 +1696,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandMarket(command) {
+        if (this.mapMarkers === null) return null;
         const instance = Client.client.getInstance(this.guildId);
         const prefix = this.generalSettings.prefix;
         const commandMarket = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxMarket')}`;
@@ -2044,6 +2054,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandOffline() {
+        if (this.team === null) return null;
         let string = '';
         let counter = 0;
         for (const player of this.team.players) {
@@ -2059,6 +2070,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandOnline() {
+        if (this.team === null) return null;
         let string = '';
         let counter = 0;
         for (const player of this.team.players) {
@@ -2161,6 +2173,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandPop(isInfoChannel = false) {
+        if (this.info === null) return null;
         if (isInfoChannel) {
             return `${this.info.players}${this.info.isQueue() ? `(${this.info.queuedPlayers})` : ''}` +
                 `/${this.info.maxPlayers}`;
@@ -2178,6 +2191,7 @@ class RustPlus extends RustPlusLib {
     }
 
     async getCommandProx(command, callerSteamId) {
+        if (this.team === null) return null;
         const caller = this.team.getPlayer(callerSteamId);
         const prefix = this.generalSettings.prefix;
         const commandProx = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxProx')}`;
@@ -2365,6 +2379,7 @@ class RustPlus extends RustPlusLib {
     }
 
     async getCommandSend(command, callerName) {
+        if (this.team === null) return null;
         const credentials = InstanceUtils.readCredentialsFile(this.guildId);
         const prefix = this.generalSettings.prefix;
         const commandSend = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxSend')}`;
@@ -2415,6 +2430,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandSmall(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         if (this.mapMarkers.crateSmallOilRigTimer) {
             const time = Timer.getTimeLeftOfTimer(this.mapMarkers.crateSmallOilRigTimer);
@@ -2493,6 +2509,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandSteamId(command, callerSteamId, callerName) {
+        if (this.team === null) return null;
         const prefix = this.generalSettings.prefix;
         const commandSteamid = `${prefix}${Client.client.intlGet(this.guildId, 'commandSyntaxSteamid')}`;
         const commandSteamidEn = `${prefix}${Client.client.intlGet('en', 'commandSyntaxSteamid')}`;
@@ -2527,6 +2544,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandTeam() {
+        if (this.team === null) return null;
         let string = '';
         for (const player of this.team.players) {
             string += `${player.name}, `;
@@ -2536,6 +2554,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandTime(isInfoChannel = false) {
+        if (this.time === null) return null;
         const time = Timer.convertDecimalToHoursMinutes(this.time.time);
         if (isInfoChannel) {
             return [time, this.time.getTimeTillDayOrNight('s')];
@@ -2804,6 +2823,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandWipe(isInfoChannel = false) {
+        if (this.info === null) return null;
         if (isInfoChannel) {
             return Client.client.intlGet(this.guildId, 'dayOfWipe', {
                 day: Math.ceil(this.info.getSecondsSinceWipe() / (60 * 60 * 24))
@@ -2817,6 +2837,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandTravelingVendor(isInfoChannel = false) {
+        if (this.mapMarkers === null) return null;
         const strings = [];
         for (const travelingVendor of this.mapMarkers.travelingVendors) {
             if (isInfoChannel) {

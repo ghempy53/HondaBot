@@ -69,6 +69,9 @@ module.exports = {
     },
 
     handlers: async function (rustplus, client, info, mapMarkers, teamInfo, time) {
+        if (rustplus.team === null || rustplus.time === null ||
+            rustplus.info === null || rustplus.mapMarkers === null) return;
+
         await TeamHandler.handler(rustplus, client, teamInfo.teamInfo);
         rustplus.team.updateTeam(teamInfo.teamInfo);
 

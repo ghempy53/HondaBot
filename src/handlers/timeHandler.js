@@ -27,6 +27,7 @@ module.exports = {
     },
 
     checkChanges: function (rustplus, client, time) {
+        if (rustplus.time === null) return;
         if (rustplus.time.timeTillActive) return;
 
         const prevTime = rustplus.time.time;

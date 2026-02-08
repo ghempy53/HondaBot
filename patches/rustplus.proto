@@ -292,9 +292,9 @@ message AppTeamInfo {
 		required float x = 3;
 		required float y = 4;
 		optional bool isOnline = 5;
-		required uint32 spawnTime = 6;
-		required bool isAlive = 7;
-		required uint32 deathTime = 8;
+		optional uint32 spawnTime = 6;
+		optional bool isAlive = 7;
+		optional uint32 deathTime = 8;
 	}
 
 	message Note {
