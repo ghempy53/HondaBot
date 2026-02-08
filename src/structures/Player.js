@@ -29,9 +29,9 @@ class Player {
         this._x = player.x;
         this._y = player.y;
         this._isOnline = player.isOnline ?? false;
-        this._spawnTime = player.spawnTime;
-        this._isAlive = player.isAlive;
-        this._deathTime = player.deathTime;
+        this._spawnTime = player.spawnTime ?? 0;
+        this._isAlive = player.isAlive ?? false;
+        this._deathTime = player.deathTime ?? 0;
 
         this._rustplus = rustplus;
 
@@ -130,9 +130,9 @@ class Player {
         this.x = player.x;
         this.y = player.y;
         this.isOnline = player.isOnline ?? false;
-        this.spawnTime = player.spawnTime;
-        this.isAlive = player.isAlive;
-        this.deathTime = player.deathTime;
+        this.spawnTime = player.spawnTime ?? 0;
+        this.isAlive = player.isAlive ?? false;
+        this.deathTime = player.deathTime ?? 0;
 
         this.updatePos();
     }
