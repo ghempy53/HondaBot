@@ -560,6 +560,7 @@
     "playerJustConnectedTo": "{name} подключился к {server}.",
     "playerJustConnectedTracker": "{name} подключился, из трекера {tracker}.",
     "playerJustDied": "{name} погиб в {location}.",
+    "playerJustDiedDetails": "{details} в {location}.",
     "playerJustDisconnected": "{name} отключился.",
     "playerJustDisconnectedFrom": "{name} отключился от {server}.",
     "playerJustDisconnectedTracker": "{name} отключился, из трекера {tracker}.",

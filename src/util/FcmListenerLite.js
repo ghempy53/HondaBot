@@ -138,7 +138,7 @@ module.exports = async (client, guild, steamId) => {
                 switch (body.type) {
                     case 'death': {
                         client.log('FCM LITE', `GuildID: ${guild.id}, SteamID: ${steamId}, player: death`);
-                        playerDeath(client, guild, title, message, body, discordUserId);
+                        playerDeath(client, guild, title, message, body, discordUserId, steamId);
                     } break;
 
                     default: {
@@ -346,9 +346,19 @@ async function pairingEntityStorageMonitor(client, guild, title, message, body) 
     }
 }
 
-async function playerDeath(client, guild, title, message, body, discordUserId) {
+async function playerDeath(client, guild, title, message, body, discordUserId, playerSteamId) {
     const user = await DiscordTools.getUserById(guild.id, discordUserId);
     if (!user) return;
+
+    /* Store death info on rustplus instance so teamHandler can include killer details */
+    const rustplus = client.rustplusInstances[guild.id];
+    if (rustplus && playerSteamId) {
+        rustplus.pendingDeathInfo[playerSteamId] = {
+            title: title,
+            targetId: body.targetId || '',
+            timestamp: Date.now()
+        };
+    }
 
     let png = null;
     if (body.targetId !== '') png = await Scrape.scrapeSteamProfilePicture(client, body.targetId);

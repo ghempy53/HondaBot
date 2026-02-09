@@ -164,7 +164,7 @@ module.exports = async (client, guild) => {
                 switch (body.type) {
                     case 'death': {
                         client.log('FCM Host', `GuildID: ${guild.id}, SteamID: ${hoster}, player: death`);
-                        playerDeath(client, guild, title, message, body, discordUserId);
+                        playerDeath(client, guild, title, message, body, discordUserId, hoster);
                     } break;
 
                     default: {
@@ -494,8 +494,18 @@ async function alarmRaidAlarm(client, guild, title, message, body) {
     client.log(client.intlGet(null, 'infoCap'), `${title} ${message}`);
 }
 
-async function playerDeath(client, guild, title, message, body, discordUserId) {
+async function playerDeath(client, guild, title, message, body, discordUserId, hosterSteamId) {
     const user = await DiscordTools.getUserById(guild.id, discordUserId);
+
+    /* Store death info on rustplus instance so teamHandler can include killer details */
+    const rustplus = client.rustplusInstances[guild.id];
+    if (rustplus && hosterSteamId) {
+        rustplus.pendingDeathInfo[hosterSteamId] = {
+            title: title,
+            targetId: body.targetId || '',
+            timestamp: Date.now()
+        };
+    }
 
     let png = null;
     if (body.targetId !== '') png = await Scrape.scrapeSteamProfilePicture(client, body.targetId);

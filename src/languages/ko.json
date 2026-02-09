@@ -560,6 +560,7 @@
     "playerJustConnectedTo": "{name}이(가) 방금 {server}에 연결되었습니다.",
     "playerJustConnectedTracker": "{tracker} 에 있는 {name} 이 온라인 상태가 되었습니다.",
     "playerJustDied": "{name}이(가) {location}에서 방금 사망했습니다.",
+    "playerJustDiedDetails": "{details} {location}에서.",
     "playerJustDisconnected": "{name}의 연결이 끊겼습니다.",
     "playerJustDisconnectedFrom": "{name}이(가) {server}에서 연결이 끊겼습니다.",
     "playerJustDisconnectedTracker": "{tracker} 에 있는 {name} 이 오프라인 상태가 되었습니다.",
