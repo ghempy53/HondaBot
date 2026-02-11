@@ -428,6 +428,22 @@ cmd_clean() {
         echo ""
         print_success "Cleaned up container and image!"
         echo ""
+
+        # Ask about FCM credentials
+        if [[ -d "credentials" ]] && [[ -n "$(ls -A credentials 2>/dev/null)" ]]; then
+            echo ""
+            print_warning "FCM credentials found in credentials/ directory."
+            read -p "Do you want to remove FCM credentials? (y/N): " remove_creds
+            if [[ "$remove_creds" =~ ^[Yy]$ ]]; then
+                print_step "Removing FCM credentials..."
+                rm -rf credentials/*
+                print_success "FCM credentials removed."
+            else
+                print_info "FCM credentials preserved."
+            fi
+        fi
+
+        echo ""
         print_info "Note: Volumes and base images (node:18) preserved."
         echo "      Use 'clean-all' to remove everything."
     else
@@ -479,6 +495,20 @@ cmd_clean_all() {
         # Clean ALL unused networks
         print_step "Removing all unused networks..."
         docker network prune -f 2>/dev/null || true
+
+        # Ask about FCM credentials
+        if [[ -d "credentials" ]] && [[ -n "$(ls -A credentials 2>/dev/null)" ]]; then
+            echo ""
+            print_warning "FCM credentials found in credentials/ directory."
+            read -p "Do you also want to remove FCM credentials? (y/N): " remove_creds
+            if [[ "$remove_creds" =~ ^[Yy]$ ]]; then
+                print_step "Removing FCM credentials..."
+                rm -rf credentials/*
+                print_success "FCM credentials removed."
+            else
+                print_info "FCM credentials preserved."
+            fi
+        fi
 
         # Show what's left
         echo ""
