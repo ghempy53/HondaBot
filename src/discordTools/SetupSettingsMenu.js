@@ -38,7 +38,17 @@ module.exports = async (client, guild, forced = false) => {
         return;
     }
 
-    if (instance.firstTime || forced) {
+    /* Check if settings channel is empty (e.g. channel was recreated or messages were deleted) */
+    let isEmpty = false;
+    if (!instance.firstTime && !forced) {
+        try {
+            const messages = await channel.messages.fetch({ limit: 1 });
+            isEmpty = messages.size === 0;
+        }
+        catch (e) { /* Ignore */ }
+    }
+
+    if (instance.firstTime || forced || isEmpty) {
         await DiscordTools.clearTextChannel(guild.id, instance.channelId.settings, 100);
 
         await setupGeneralSettings(client, guild.id, channel);
