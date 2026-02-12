@@ -68,10 +68,28 @@ module.exports = {
                 if (player.steamId === playerUpdated.steamId.toString()) {
                     if (player.isGoneDead(playerUpdated)) {
                         const location = player.pos === null ? 'spawn' : player.pos.string;
-                        const str = client.intlGet(guildId, 'playerJustDied', {
-                            name: player.name,
-                            location: location
-                        });
+
+                        /* Check for FCM death info with killer details (within 60s window) */
+                        let str;
+                        const deathInfo = rustplus.pendingDeathInfo[player.steamId];
+                        if (deathInfo && (Date.now() - deathInfo.timestamp) < 60000) {
+                            /* Convert FCM title from second to third person */
+                            let deathCause = deathInfo.title
+                                .replace(/^You were/, `${player.name} was`)
+                                .replace(/^You /, `${player.name} `);
+                            str = client.intlGet(guildId, 'playerJustDiedDetails', {
+                                details: deathCause,
+                                location: location
+                            });
+                            delete rustplus.pendingDeathInfo[player.steamId];
+                        }
+                        else {
+                            str = client.intlGet(guildId, 'playerJustDied', {
+                                name: player.name,
+                                location: location
+                            });
+                        }
+
                         await DiscordMessages.sendActivityNotificationMessage(
                             guildId, serverId, Constants.COLOR_INACTIVE, str, player.steamId);
                         if (instance.generalSettings.deathNotify) rustplus.sendInGameMessage(str);
