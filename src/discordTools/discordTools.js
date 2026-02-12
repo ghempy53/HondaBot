@@ -21,6 +21,7 @@
 const Discord = require('discord.js');
 
 const Client = require('../../index');
+const Timer = require('../util/timer.js');
 
 module.exports = {
     getGuild: function (guildId) {
@@ -286,14 +287,22 @@ module.exports = {
                 return;
             }
 
+            let deleteCount = 0;
             for (let message of messages) {
                 message = message[1];
                 if (!message.author.bot) {
                     break;
                 }
 
+                /* Delay every 4 deletes to avoid hitting Discord's rate limit
+                   (5 per ~5 seconds on DELETE /channels/:id/messages/:id) */
+                if (deleteCount > 0 && deleteCount % 4 === 0) {
+                    await Timer.sleep(5000);
+                }
+
                 try {
                     await message.delete();
+                    deleteCount++;
                 }
                 catch (e) {
                     Client.client.log(Client.client.intlGet(null, 'errorCap'),
