@@ -238,6 +238,14 @@ class DiscordBot extends Discord.Client {
 
         await require('../discordTools/SetupSettingsMenu')(this, guild);
 
+        /* On subsequent startups, repopulate server list and trackers from saved data
+           without clearing channels. This ensures server embeds and tracker embeds are
+           always present after a Docker rebuild/restart without needing to re-pair. */
+        if (!firstTime) {
+            await require('../discordTools/SetupServerList')(this, guild, false);
+            await require('../discordTools/SetupTrackers')(this, guild, false);
+        }
+
         if (firstTime) await PermissionHandler.resetPermissionsAllChannels(this, guild);
 
         this.resetRustplusVariables(guild.id);
