@@ -273,8 +273,8 @@ class RustPlus extends RustPlusLib {
         this.log(Client.client.intlGet(null, 'infoCap'), Client.client.intlGet(null, `logInGameCommand`, args));
     }
 
-    sendInGameMessage(message) {
-        InGameChatHandler.inGameChatHandler(this, Client.client, message);
+    sendInGameMessage(message, skipTrademark = false) {
+        InGameChatHandler.inGameChatHandler(this, Client.client, message, skipTrademark);
     }
 
     async sendEvent(setting, text, event, embed_color, firstPoll = false, image = null) {
@@ -1825,10 +1825,8 @@ class RustPlus extends RustPlusLib {
 
                 const formattedOrders = orders.map(formatOrder);
 
-                // Account for trademark in message length calculation
-                const trademark = this.generalSettings.trademark;
-                const trademarkString = (trademark === 'NOT SHOWING') ? '' : `${trademark} | `;
-                const availableLength = MAX_MESSAGE_LENGTH - trademarkString.length;
+                // Use full message length since market results are sent without trademark
+                const availableLength = MAX_MESSAGE_LENGTH;
 
                 // If 1-2 orders and they fit in one message, return single string
                 if (orders.length <= 2) {
