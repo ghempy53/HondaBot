@@ -22,10 +22,12 @@ const DiscordMessages = require('./discordMessages.js');
 const DiscordTools = require('./discordTools.js');
 const Timer = require('../util/timer.js');
 
-module.exports = async (client, guild) => {
+module.exports = async (client, guild, clearChannel = true) => {
     const instance = client.getInstance(guild.id);
 
-    await DiscordTools.clearTextChannel(guild.id, instance.channelId.servers, 100);
+    if (clearChannel) {
+        await DiscordTools.clearTextChannel(guild.id, instance.channelId.servers, 100);
+    }
 
     let serverCount = 0;
     for (const serverId in instance.serverList) {
