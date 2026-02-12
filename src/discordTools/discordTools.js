@@ -287,27 +287,33 @@ module.exports = {
                 return;
             }
 
-            let deleteCount = 0;
+            let consecutiveFailures = 0;
             for (let message of messages) {
                 message = message[1];
                 if (!message.author.bot) {
                     break;
                 }
 
-                /* Delay every 4 deletes to avoid hitting Discord's rate limit
-                   (5 per ~5 seconds on DELETE /channels/:id/messages/:id) */
-                if (deleteCount > 0 && deleteCount % 4 === 0) {
-                    await Timer.sleep(5000);
-                }
-
                 try {
                     await message.delete();
-                    deleteCount++;
+                    consecutiveFailures = 0;
                 }
                 catch (e) {
+                    consecutiveFailures++;
                     Client.client.log(Client.client.intlGet(null, 'errorCap'),
                         Client.client.intlGet(null, 'couldNotPerformMessageDelete'), 'error');
+
+                    /* Stop trying after 3 consecutive failures (likely a permission issue) */
+                    if (consecutiveFailures >= 3) {
+                        Client.client.log(Client.client.intlGet(null, 'warningCap'),
+                            `Aborting channel clear for ${channelId}: too many consecutive failures`);
+                        break;
+                    }
                 }
+
+                /* Delay between each delete to stay under Discord's rate limit
+                   (5 per ~5 seconds on DELETE /channels/:id/messages/:id) */
+                await Timer.sleep(1100);
             }
         }
     },
