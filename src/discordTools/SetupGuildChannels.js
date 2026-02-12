@@ -45,9 +45,11 @@ async function addTextChannel(name, idName, client, guild, parent, permissionWri
         channel = DiscordTools.getTextChannelById(guild.id, instance.channelId[idName]);
     }
     if (channel === undefined) {
-        /* Look for an existing channel by name under the same category before creating a new one */
+        /* Look for an existing channel by name under the same category before creating a new one.
+           Discord normalizes text channel names to lowercase with hyphens for spaces. */
+        const normalizedName = name.toLowerCase().replace(/\s+/g, '-');
         const existing = guild.channels.cache.find(
-            c => c.name === name && c.parentId === parent.id && c.type === 0);
+            c => c.name === normalizedName && c.parentId === parent.id && c.type === 0);
         if (existing) {
             channel = existing;
         } else {
