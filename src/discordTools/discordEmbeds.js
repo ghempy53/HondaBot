@@ -75,8 +75,10 @@ module.exports = {
         const server = instance.serverList[serverId];
         let hoster = Client.client.intlGet(guildId, 'unknown');
         if (credentials.hasOwnProperty(server.steamId)) {
-            hoster = await DiscordTools.getUserById(guildId, credentials[server.steamId].discord_user_id);
-            hoster = hoster.user.username;
+            const member = await DiscordTools.getUserById(guildId, credentials[server.steamId].discord_user_id);
+            if (member) {
+                hoster = member.user.username;
+            }
         }
 
         let description = '';

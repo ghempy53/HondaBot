@@ -101,7 +101,10 @@ module.exports = async (client, guild) => {
                 switch (body.type) {
                     case 'server': {
                         client.log('FCM Host', `GuildID: ${guild.id}, SteamID: ${hoster}, pairing: server`);
-                        pairingServer(client, guild, title, message, body);
+                        pairingServer(client, guild, title, message, body).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process server pairing: ${e.message}`, 'error');
+                        });
                     } break;
 
                     case 'entity': {
@@ -109,19 +112,28 @@ module.exports = async (client, guild) => {
                             case 'Smart Switch': {
                                 client.log('FCM Host',
                                     `GuildID: ${guild.id}, SteamID: ${hoster}, pairing: entity: Switch`);
-                                pairingEntitySwitch(client, guild, title, message, body);
+                                pairingEntitySwitch(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process switch pairing: ${e.message}`, 'error');
+                                });
                             } break;
 
                             case 'Smart Alarm': {
                                 client.log('FCM Host',
                                     `GuildID: ${guild.id}, SteamID: ${hoster}, pairing: entity: Smart Alarm`);
-                                pairingEntitySmartAlarm(client, guild, title, message, body);
+                                pairingEntitySmartAlarm(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process alarm pairing: ${e.message}`, 'error');
+                                });
                             } break;
 
                             case 'Storage Monitor': {
                                 client.log('FCM Host',
                                     `GuildID: ${guild.id}, SteamID: ${hoster}, pairing: entity: Storage Monitor`);
-                                pairingEntityStorageMonitor(client, guild, title, message, body);
+                                pairingEntityStorageMonitor(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process storage monitor pairing: ${e.message}`, 'error');
+                                });
                             } break;
 
                             default: {
@@ -143,7 +155,10 @@ module.exports = async (client, guild) => {
                 switch (body.type) {
                     case 'alarm': {
                         client.log('FCM Host', `GuildID: ${guild.id}, SteamID: ${hoster}, alarm: alarm`);
-                        alarmAlarm(client, guild, title, message, body);
+                        alarmAlarm(client, guild, title, message, body).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process alarm: ${e.message}`, 'error');
+                        });
                     } break;
 
                     default: {
@@ -151,7 +166,10 @@ module.exports = async (client, guild) => {
                             /* Custom alarm from plugin: https://umod.org/plugins/raid-alarm */
                             client.log('FCM Host',
                                 `GuildID: ${guild.id}, SteamID: ${hoster}, alarm: raid-alarm plugin`);
-                            alarmRaidAlarm(client, guild, title, message, body);
+                            alarmRaidAlarm(client, guild, title, message, body).catch(e => {
+                                client.log(client.intlGet(null, 'errorCap'),
+                                    `Failed to process raid alarm: ${e.message}`, 'error');
+                            });
                             break;
                         }
                         client.log('FCM Host',
@@ -164,7 +182,10 @@ module.exports = async (client, guild) => {
                 switch (body.type) {
                     case 'death': {
                         client.log('FCM Host', `GuildID: ${guild.id}, SteamID: ${hoster}, player: death`);
-                        playerDeath(client, guild, title, message, body, discordUserId, hoster);
+                        playerDeath(client, guild, title, message, body, discordUserId, hoster).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process player death: ${e.message}`, 'error');
+                        });
                     } break;
 
                     default: {
@@ -178,7 +199,10 @@ module.exports = async (client, guild) => {
                 switch (body.type) {
                     case 'login': {
                         client.log('FCM Host', `GuildID: ${guild.id}, SteamID: ${hoster}, team: login`);
-                        teamLogin(client, guild, title, message, body);
+                        teamLogin(client, guild, title, message, body).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process team login: ${e.message}`, 'error');
+                        });
                     } break;
 
                     default: {
