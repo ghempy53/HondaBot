@@ -99,8 +99,16 @@ COPY --from=builder /build/src/languages ./dist/src/languages
 COPY --from=builder /build/src/staticFiles ./dist/src/staticFiles
 COPY --from=builder /build/src/templates ./dist/src/templates
 
-# Create data directories
+# Create data directories and symlinks so compiled code (which resolves paths
+# relative to dist/) can reach the volume-mounted directories at /app/*.
+# Without these symlinks, dist/src/util/instanceUtils.js resolves
+# Path.join(__dirname,'..','..','instances') to /app/dist/instances/ which is
+# inside the ephemeral container layer and lost on every rebuild.
 RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
+    && ln -s /app/credentials /app/dist/credentials \
+    && ln -s /app/instances /app/dist/instances \
+    && ln -s /app/logs /app/dist/logs \
+    && ln -s /app/maps /app/dist/maps \
     && chown -R hondabot:hondabot /app
 
 VOLUME ["/app/credentials", "/app/instances", "/app/logs", "/app/maps"]
