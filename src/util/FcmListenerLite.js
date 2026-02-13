@@ -98,7 +98,10 @@ module.exports = async (client, guild, steamId) => {
                 switch (body.type) {
                     case 'server': {
                         client.log('FCM LITE', `GuildID: ${guild.id}, SteamID: ${steamId}, pairing: server`);
-                        pairingServer(client, guild, steamId, title, message, body);
+                        pairingServer(client, guild, steamId, title, message, body).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process server pairing (lite): ${e.message}`, 'error');
+                        });
                     } break;
 
                     case 'entity': {
@@ -106,19 +109,28 @@ module.exports = async (client, guild, steamId) => {
                             case 'Smart Switch': {
                                 client.log('FCM LITE',
                                     `GuildID: ${guild.id}, SteamID: ${steamId}, pairing: entity: Switch`);
-                                pairingEntitySwitch(client, guild, title, message, body);
+                                pairingEntitySwitch(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process switch pairing (lite): ${e.message}`, 'error');
+                                });
                             } break;
 
                             case 'Smart Alarm': {
                                 client.log('FCM LITE',
                                     `GuildID: ${guild.id}, SteamID: ${steamId}, pairing: entity: Smart Alarm`);
-                                pairingEntitySmartAlarm(client, guild, title, message, body);
+                                pairingEntitySmartAlarm(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process alarm pairing (lite): ${e.message}`, 'error');
+                                });
                             } break;
 
                             case 'Storage Monitor': {
                                 client.log('FCM LITE',
                                     `GuildID: ${guild.id}, SteamID: ${steamId}, pairing: entity: Storage Monitor`);
-                                pairingEntityStorageMonitor(client, guild, title, message, body);
+                                pairingEntityStorageMonitor(client, guild, title, message, body).catch(e => {
+                                    client.log(client.intlGet(null, 'errorCap'),
+                                        `Failed to process storage monitor pairing (lite): ${e.message}`, 'error');
+                                });
                             } break;
 
                             default: {
@@ -138,7 +150,10 @@ module.exports = async (client, guild, steamId) => {
                 switch (body.type) {
                     case 'death': {
                         client.log('FCM LITE', `GuildID: ${guild.id}, SteamID: ${steamId}, player: death`);
-                        playerDeath(client, guild, title, message, body, discordUserId, steamId);
+                        playerDeath(client, guild, title, message, body, discordUserId, steamId).catch(e => {
+                            client.log(client.intlGet(null, 'errorCap'),
+                                `Failed to process player death (lite): ${e.message}`, 'error');
+                        });
                     } break;
 
                     default: {
