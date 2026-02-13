@@ -21,6 +21,7 @@
 const Discord = require('discord.js');
 
 const Client = require('../../index');
+const Timer = require('../util/timer.js');
 
 module.exports = {
     getGuild: function (guildId) {
@@ -286,6 +287,7 @@ module.exports = {
                 return;
             }
 
+            let consecutiveFailures = 0;
             for (let message of messages) {
                 message = message[1];
                 if (!message.author.bot) {
@@ -294,11 +296,24 @@ module.exports = {
 
                 try {
                     await message.delete();
+                    consecutiveFailures = 0;
                 }
                 catch (e) {
+                    consecutiveFailures++;
                     Client.client.log(Client.client.intlGet(null, 'errorCap'),
                         Client.client.intlGet(null, 'couldNotPerformMessageDelete'), 'error');
+
+                    /* Stop trying after 3 consecutive failures (likely a permission issue) */
+                    if (consecutiveFailures >= 3) {
+                        Client.client.log(Client.client.intlGet(null, 'warningCap'),
+                            `Aborting channel clear for ${channelId}: too many consecutive failures`);
+                        break;
+                    }
                 }
+
+                /* Delay between each delete to stay under Discord's rate limit
+                   (5 per ~5 seconds on DELETE /channels/:id/messages/:id) */
+                await Timer.sleep(1100);
             }
         }
     },

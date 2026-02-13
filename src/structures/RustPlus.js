@@ -91,6 +91,7 @@ class RustPlus extends RustPlusLib {
         this.playerConnections = new Object();
         this.allDeaths = [];
         this.playerDeaths = new Object();
+        this.pendingDeathInfo = new Object();   /* Stores FCM death info (killer) keyed by steamId */
         this.events = {
             all: [],
             cargo: [],

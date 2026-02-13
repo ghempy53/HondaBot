@@ -560,6 +560,7 @@
     "playerJustConnectedTo": "{name} just connected to {server}.",
     "playerJustConnectedTracker": "{name} se právě připojil z trackeru {tracker}.",
     "playerJustDied": "{name} just died at {location}.",
+    "playerJustDiedDetails": "{details} at {location}.",
     "playerJustDisconnected": "{name} just disconnected.",
     "playerJustDisconnectedFrom": "{name} just disconnected from {server}.",
     "playerJustDisconnectedTracker": "{name} se právě odpojil od trackeru {tracker}.",

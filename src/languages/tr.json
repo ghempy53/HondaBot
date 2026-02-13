@@ -560,6 +560,7 @@
     "playerJustConnectedTo": "{name} sunucuya bağlandı - {server}.",
     "playerJustConnectedTracker": "{name} az önce {tracker} izleyicisinden bağlandı.",
     "playerJustDied": "{name} öldü, {location}.",
+    "playerJustDiedDetails": "{details}, {location}.",
     "playerJustDisconnected": "{name} oyundan çıktı.",
     "playerJustDisconnectedFrom": "{name} oyundan çıktı - {server}.",
     "playerJustDisconnectedTracker": "{name} izleyicisi'nin {tracker} ile olan bağlantısı az önce kesildi.",

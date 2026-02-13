@@ -560,6 +560,7 @@
     "playerJustConnectedTo": "{name} anslöt precis till {server}.",
     "playerJustConnectedTracker": "{name} just connected from tracker {tracker}.",
     "playerJustDied": "{name} dog precis vid {location}.",
+    "playerJustDiedDetails": "{details} vid {location}.",
     "playerJustDisconnected": "{name} kopplade precis från.",
     "playerJustDisconnectedFrom": "{name} kopplade precis från servern {server}.",
     "playerJustDisconnectedTracker": "{name} just disconnected from tracker {tracker}.",
