@@ -232,7 +232,20 @@ module.exports = async (client, guild) => {
         }
     });
 
-    client.fcmListeners[guild.id].connect();
+    client.fcmListeners[guild.id].on('connect', () => {
+        client.log(client.intlGet(null, 'infoCap'),
+            `FCM Host connected for guildId: ${guild.id}, steamId: ${hoster}`);
+    });
+
+    client.fcmListeners[guild.id].on('disconnect', () => {
+        client.log(client.intlGet(null, 'warningCap'),
+            `FCM Host disconnected for guildId: ${guild.id}, steamId: ${hoster}. Reconnecting...`);
+    });
+
+    client.fcmListeners[guild.id].connect().catch(e => {
+        client.log(client.intlGet(null, 'errorCap'),
+            `FCM Host connection failed for guildId: ${guild.id}, steamId: ${hoster}: ${e.message}`, 'error');
+    });
 };
 
 function isValidUrl(url) {

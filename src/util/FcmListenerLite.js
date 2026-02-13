@@ -166,7 +166,20 @@ module.exports = async (client, guild, steamId) => {
         }
     });
 
-    client.fcmListenersLite[guild.id][steamId].connect();
+    client.fcmListenersLite[guild.id][steamId].on('connect', () => {
+        client.log(client.intlGet(null, 'infoCap'),
+            `FCM Lite connected for guildId: ${guild.id}, steamId: ${steamId}`);
+    });
+
+    client.fcmListenersLite[guild.id][steamId].on('disconnect', () => {
+        client.log(client.intlGet(null, 'warningCap'),
+            `FCM Lite disconnected for guildId: ${guild.id}, steamId: ${steamId}. Reconnecting...`);
+    });
+
+    client.fcmListenersLite[guild.id][steamId].connect().catch(e => {
+        client.log(client.intlGet(null, 'errorCap'),
+            `FCM Lite connection failed for guildId: ${guild.id}, steamId: ${steamId}: ${e.message}`, 'error');
+    });
 };
 
 function isValidUrl(url) {
