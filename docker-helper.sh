@@ -309,16 +309,25 @@ cmd_rebuild() {
     print_header
     echo "Rebuilding HondaBot from scratch..."
     echo ""
-    
+
     print_step "Stopping container..."
     docker compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
-    
+
     print_step "Removing old image..."
     docker rmi hondabot:latest 2>/dev/null || true
-    
+
     print_step "Cleaning build cache..."
     docker builder prune -f --filter "until=1h" 2>/dev/null || true
-    
+
+    # Ensure data directories exist with correct ownership for the container user
+    # (UID 1001 = hondabot inside the container). Without this, the container may
+    # not be able to write credentials, instances, logs, or maps after a rebuild.
+    print_step "Ensuring data directories have correct ownership..."
+    for dir in credentials instances logs maps; do
+        mkdir -p "$dir" 2>/dev/null || true
+        sudo chown -R 1001:1001 "$dir" 2>/dev/null || true
+    done
+
     echo ""
     cmd_build
     echo ""
@@ -807,18 +816,25 @@ EOF
 cmd_fix_permissions() {
     print_header
     echo "Fixing file permissions..."
-    
+
     # Make scripts executable
     chmod +x docker-helper.sh 2>/dev/null && print_success "Made docker-helper.sh executable"
     chmod +x *.sh 2>/dev/null || true
-    
-    # Fix data directory permissions
+
+    # Fix data directory permissions and ownership
+    # Container runs as hondabot (UID 1001, GID 1001) — directories must be writable
     for dir in credentials instances logs maps; do
         if [[ -d "$dir" ]]; then
+            sudo chown -R 1001:1001 "$dir" 2>/dev/null && print_success "Fixed ownership for $dir/ (UID 1001)"
             chmod -R 755 "$dir" 2>/dev/null && print_success "Fixed permissions for $dir/"
+        else
+            mkdir -p "$dir" 2>/dev/null
+            sudo chown -R 1001:1001 "$dir" 2>/dev/null
+            chmod -R 755 "$dir" 2>/dev/null
+            print_success "Created $dir/ with correct ownership (UID 1001)"
         fi
     done
-    
+
     print_success "Permissions fixed!"
 }
 
