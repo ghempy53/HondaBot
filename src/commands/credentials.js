@@ -116,7 +116,8 @@ async function addCredentials(client, interaction, verifyId) {
     const guildId = interaction.guildId;
     const credentials = InstanceUtils.readCredentialsFile(guildId);
     const steamId = interaction.options.getString('steam_id');
-    const isHoster = interaction.options.getBoolean('host') || Object.keys(credentials).length === 1;
+    const isHoster = interaction.options.getBoolean('host') || Object.keys(credentials).length === 1 ||
+        credentials.hoster === null;
 
     if (Object.keys(credentials).length !== 1 && isHoster) {
         if (Config.discord.needAdminPrivileges && !client.isAdministrator(interaction)) {
