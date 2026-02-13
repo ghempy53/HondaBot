@@ -73,10 +73,12 @@ FROM node:22-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="HondaBot"
 LABEL org.opencontainers.image.description="Discord bot for Rust+ integration"
 
-# Install runtime dependencies (sharp includes its own libvips)
+# Install runtime dependencies
+# - gosu: drop root privileges after fixing volume permissions in entrypoint
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     dumb-init \
+    gosu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -111,15 +113,20 @@ RUN mkdir -p /app/credentials /app/instances /app/logs /app/maps /app/temp \
     && ln -s /app/maps /app/dist/maps \
     && chown -R hondabot:hondabot /app
 
+# Copy entrypoint that fixes bind-mount ownership then drops to hondabot
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 VOLUME ["/app/credentials", "/app/instances", "/app/logs", "/app/maps"]
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-USER hondabot
+# NOTE: No USER directive here. The container starts as root so the entrypoint
+# can chown bind-mounted volumes, then drops to hondabot via gosu.
 
 HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
     CMD node -e "console.log('healthy')" || exit 1
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/app/entrypoint.sh"]
 CMD ["node", "dist/index.js"]
