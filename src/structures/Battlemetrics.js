@@ -45,6 +45,7 @@ class Battlemetrics {
         this._ready = false;
         this._updatedAt = null;
         this._lastUpdateSuccessful = null;
+        this._consecutiveFailures = 0;
         this._rustmapsAvailable = null;
         this._streamerMode = true; /* Until proven otherwise */
         this._serverLog = [];
@@ -384,8 +385,10 @@ class Battlemetrics {
         const response = await this.#request(api_call);
 
         if (response.status !== 200) {
-            Client.client.log(Client.client.intlGet(null, 'errorCap'),
-                Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: api_call }), 'error');
+            if (this._consecutiveFailures === 0) {
+                Client.client.log(Client.client.intlGet(null, 'errorCap'),
+                    Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: api_call }), 'error');
+            }
             return null;
         }
 
@@ -484,11 +487,20 @@ class Battlemetrics {
 
         if (!data) {
             this.lastUpdateSuccessful = false;
-            Client.client.log(Client.client.intlGet(null, 'errorCap'),
-                Client.client.intlGet(null, 'battlemetricsFailedToUpdate', { server: this.id }), 'error');
+            if (this._consecutiveFailures === 0) {
+                Client.client.log(Client.client.intlGet(null, 'errorCap'),
+                    Client.client.intlGet(null, 'battlemetricsFailedToUpdate', { server: this.id }), 'error');
+            }
+            this._consecutiveFailures += 1;
             return false;
         }
 
+        if (this._consecutiveFailures > 0) {
+            Client.client.log(Client.client.intlGet(null, 'infoCap'),
+                `Battlemetrics Server ${this.id} recovered after ${this._consecutiveFailures} failed update` +
+                `${this._consecutiveFailures === 1 ? '' : 's'}.`);
+            this._consecutiveFailures = 0;
+        }
         this.lastUpdateSuccessful = true;
         this.data = data;
 
