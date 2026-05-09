@@ -24,6 +24,60 @@ const Path = require('path');
 
 const DiscordBot = require('./src/structures/DiscordBot');
 
+/* Suppress the Node.js DEP0040 `punycode` deprecation warning emitted by a
+   transitive dependency we don't control. */
+process.on('warning', (warning: NodeJS.ErrnoException) => {
+    if (warning.name === 'DeprecationWarning' && warning.code === 'DEP0040') return;
+    console.warn(warning);
+});
+
+/* The @liamcottle/push-receiver library logs `Request failed : ...` and
+   `Retrying in N seconds` directly to console on every failed checkin/register
+   call. When the network or DNS is down those lines pile up indefinitely. Wrap
+   console.log to log only the first occurrence, then a single summary line every
+   minute, until the next success. */
+(() => {
+    const originalLog = console.log.bind(console);
+    let suppressedSince: number | null = null;
+    let suppressedCount = 0;
+    let lastSummaryAt = 0;
+    const SUMMARY_INTERVAL_MS = 60000;
+
+    const isFcmRetryNoise = (msg: string): boolean => {
+        return msg.startsWith('Request failed : ') || /^Retrying in \d+ seconds?$/.test(msg);
+    };
+
+    console.log = (...args: unknown[]) => {
+        const first = args[0];
+        if (typeof first === 'string' && isFcmRetryNoise(first)) {
+            const now = Date.now();
+            if (suppressedSince === null) {
+                suppressedSince = now;
+                lastSummaryAt = now;
+                originalLog(...args);
+                originalLog('(further FCM retry messages will be summarized while the failure persists)');
+                return;
+            }
+            suppressedCount += 1;
+            if (now - lastSummaryAt >= SUMMARY_INTERVAL_MS) {
+                lastSummaryAt = now;
+                originalLog(`(suppressed ${suppressedCount} FCM retry messages in the last ` +
+                    `${Math.round((now - suppressedSince) / 1000)}s)`);
+            }
+            return;
+        }
+        if (suppressedSince !== null) {
+            const elapsed = Math.round((Date.now() - suppressedSince) / 1000);
+            originalLog(`(FCM retry noise ended; suppressed ${suppressedCount} message` +
+                `${suppressedCount === 1 ? '' : 's'} over ${elapsed}s)`);
+            suppressedSince = null;
+            suppressedCount = 0;
+            lastSummaryAt = 0;
+        }
+        originalLog(...args);
+    };
+})();
+
 createMissingDirectories();
 
 // FIXED: Discord.js v14 compatible options
