@@ -29,6 +29,16 @@ const CONNECTION_LOG_SIZE = 1000;
 const PLAYER_CONNECTION_LOG_SIZE = 100;
 const NAME_CHANGE_LOG_SIZE = 100;
 
+/* Force IPv4 DNS resolution. api.battlemetrics.com is on Cloudflare and
+   publishes AAAA records; on hosts where IPv6 is disabled (e.g. a Pi with
+   net.ipv6.conf.all.disable_ipv6=1) Happy Eyeballs usually recovers but can
+   stall for the full TCP timeout when IPv6 is blackholed at the route layer.
+   Pinning family=4 sidesteps the ambiguity entirely. */
+const REQUEST_FAMILY = 4;
+
+/* Hard timeout so a hung connection can't freeze the update loop. */
+const REQUEST_TIMEOUT_MS = 15000;
+
 class Battlemetrics {
 
     /**
@@ -219,10 +229,13 @@ class Battlemetrics {
      */
     async #request(api_call) {
         try {
-            return await Axios.get(api_call);
+            return await Axios.get(api_call, {
+                family: REQUEST_FAMILY,
+                timeout: REQUEST_TIMEOUT_MS
+            });
         }
         catch (e) {
-            return {};
+            return { _error: e };
         }
     }
 
@@ -386,13 +399,31 @@ class Battlemetrics {
 
         if (response.status !== 200) {
             if (this._consecutiveFailures === 0) {
+                const reason = this.#describeRequestError(response);
                 Client.client.log(Client.client.intlGet(null, 'errorCap'),
-                    Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: api_call }), 'error');
+                    Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: api_call }) +
+                    (reason ? ` (${reason})` : ''), 'error');
             }
             return null;
         }
 
         return response.data;
+    }
+
+    /**
+     *  Build a short human-readable reason from a failed #request() response.
+     *  @param {object} response The response object returned by #request().
+     *  @return {string} A short reason string, or '' if no detail is available.
+     */
+    #describeRequestError(response) {
+        const e = response && response._error;
+        if (!e) return '';
+        if (e.code) {
+            if (e.response && e.response.status) return `${e.code} HTTP ${e.response.status}`;
+            return e.code;
+        }
+        if (e.response && e.response.status) return `HTTP ${e.response.status}`;
+        return e.message || '';
     }
 
     /**
@@ -446,8 +477,10 @@ class Battlemetrics {
         const response = await this.#request(search);
 
         if (response.status !== 200) {
+            const reason = this.#describeRequestError(response);
             Client.client.log(Client.client.intlGet(null, 'errorCap'),
-                Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: search }), 'error');
+                Client.client.intlGet(null, 'battlemetricsApiRequestFailed', { api_call: search }) +
+                (reason ? ` (${reason})` : ''), 'error');
             return null;
         }
 
