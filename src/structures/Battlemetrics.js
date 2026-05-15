@@ -276,6 +276,8 @@ class Battlemetrics {
     #parseProfileDataApiResponse(data) {
         const parsed = [];
 
+        if (!Array.isArray(data?.included)) return parsed;
+
         for (const name of data.included) {
             if (name.type !== 'identifier') continue;
             if (!name.hasOwnProperty('attributes')) continue;
@@ -542,6 +544,15 @@ class Battlemetrics {
 
         /* Server parameter evaluation */
 
+        if (!data?.data?.attributes || !data.data.attributes.details) {
+            this.lastUpdateSuccessful = false;
+            if (this._consecutiveFailures === 0) {
+                Client.client.log(Client.client.intlGet(null, 'errorCap'),
+                    Client.client.intlGet(null, 'battlemetricsFailedToUpdate', { server: this.id }), 'error');
+            }
+            this._consecutiveFailures += 1;
+            return false;
+        }
         const attributes = data.data.attributes;
         this.serverEvaluation = new Object();
         this.#evaluateServerParameter('server_name', this.server_name, attributes.name, firstTime);
@@ -620,7 +631,7 @@ class Battlemetrics {
         this.onlinePlayers = [];
         this.offlinePlayers = [];
 
-        const included = data.included;
+        const included = Array.isArray(data?.included) ? data.included : [];
         for (const entity of included) {
             if (entity.type !== 'player') continue;
 
@@ -653,7 +664,8 @@ class Battlemetrics {
                 this.players[entity.id]['positiveMatch'] = entity.attributes.positiveMatch;
                 this.players[entity.id]['createdAt'] = entity.attributes.createdAt;
                 this.players[entity.id]['updatedAt'] = entity.attributes.updatedAt;
-                const firstTimeVar = entity.meta.metadata.find(e => e.key === 'firstTime');
+                const metadata = entity.meta?.metadata;
+                const firstTimeVar = Array.isArray(metadata) ? metadata.find(e => e.key === 'firstTime') : null;
                 if (firstTimeVar) this.players[entity.id]['firstTime'] = firstTimeVar.value;
 
                 /* Other */
@@ -687,7 +699,8 @@ class Battlemetrics {
                 this.players[entity.id]['positiveMatch'] = entity.attributes.positiveMatch;
                 this.players[entity.id]['createdAt'] = entity.attributes.createdAt;
                 this.players[entity.id]['updatedAt'] = entity.attributes.updatedAt;
-                const firstTime = entity.meta.metadata.find(e => e.key === 'firstTime');
+                const metadata = entity.meta?.metadata;
+                const firstTime = Array.isArray(metadata) ? metadata.find(e => e.key === 'firstTime') : null;
                 if (firstTime) this.players[entity.id]['firstTime'] = firstTime.value;
 
                 /* Other */
@@ -722,6 +735,8 @@ class Battlemetrics {
      *  @param {object} data The data to update with.
      */
     update(data) {
+        if (!data?.data?.attributes || !data.data.attributes.details) return;
+
         this.ready = true;
         this.id = data.data.id;
 
@@ -847,19 +862,6 @@ class Battlemetrics {
         return ordered.map(e => e[1]);
     }
 
-    /**
-     *  Get the offline time from a player.
-     *  @param {string} playerId The id of the player to get offline time from.
-     *  @return {Array} index 0: seconds offline, index 1: The formatted offline time of a player.
-     */
-    getOfflineTime(playerId) {
-        if (!this.lastUpdateSuccessful || !this.players.hasOwnProperty(playerId) ||
-            !this.players[playerId]['logoutDate']) {
-            return null;
-        }
-
-        return this.#formatTime(this.players[playerId]['logoutDate']);
-    }
 }
 
 module.exports = Battlemetrics;
