@@ -83,19 +83,23 @@ class Info {
     isQueue() { return (this.queuedPlayers !== 0); }
 
     updateInfo(info) {
-        this.name = info.name;
-        this.headerImage = info.headerImage;
-        this.url = info.url;
-        this.map = info.map;
-        this.mapSize = info.mapSize;
-        this.wipeTime = info.wipeTime;
-        this.players = info.players;
-        this.maxPlayers = info.maxPlayers;
-        this.queuedPlayers = info.queuedPlayers;
-        this.seed = info.seed;
-        this.salt = info.salt;
+        /* Rust+ servers sometimes send partial AppInfo messages missing fields
+           that the proto used to mark `required`. Preserve previously-good
+           values so a glitch doesn't wipe out fields like wipeTime/mapSize
+           (which are read as NaN-producing inputs elsewhere). */
+        if (info.name !== undefined) this.name = info.name;
+        if (info.headerImage !== undefined) this.headerImage = info.headerImage;
+        if (info.url !== undefined) this.url = info.url;
+        if (info.map !== undefined) this.map = info.map;
+        if (info.mapSize !== undefined) this.mapSize = info.mapSize;
+        if (info.wipeTime !== undefined) this.wipeTime = info.wipeTime;
+        if (info.players !== undefined) this.players = info.players;
+        if (info.maxPlayers !== undefined) this.maxPlayers = info.maxPlayers;
+        if (info.queuedPlayers !== undefined) this.queuedPlayers = info.queuedPlayers;
+        if (info.seed !== undefined) this.seed = info.seed;
+        if (info.salt !== undefined) this.salt = info.salt;
 
-        this.correctedMapSize = Map.getCorrectedMapSize(info.mapSize);
+        if (info.mapSize !== undefined) this.correctedMapSize = Map.getCorrectedMapSize(info.mapSize);
     }
 
     getSecondsSinceWipe() { return (new Date() - new Date(this.wipeTime * 1000)) / 1000; }
