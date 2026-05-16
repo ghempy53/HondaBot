@@ -40,8 +40,20 @@ module.exports = {
 
                 rustplus.updateBotMessages(messageFromQueue);
 
-                rustplus.sendTeamMessageAsync(messageFromQueue);
                 rustplus.log(client.intlGet(guildId, 'messageCap'), messageFromQueue);
+                rustplus.sendTeamMessageAsync(messageFromQueue).then((result) => {
+                    /* sendTeamMessageAsync resolves to the AppResponse on success, or returns
+                       an Error/{error} on failure (it .catch()es internally). Surface failures
+                       so a silent server timeout doesn't masquerade as a successful send. */
+                    if (result instanceof Error) {
+                        rustplus.log(client.intlGet(null, 'errorCap'),
+                            `In-game message dropped (${result.message}): ${messageFromQueue}`, 'error');
+                    }
+                    else if (result && result.error) {
+                        rustplus.log(client.intlGet(null, 'errorCap'),
+                            `In-game message rejected (${JSON.stringify(result.error)}): ${messageFromQueue}`, 'error');
+                    }
+                });
             }
             else {
                 clearTimeout(rustplus.inGameChatTimeout);
