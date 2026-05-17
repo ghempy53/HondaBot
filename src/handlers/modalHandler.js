@@ -336,6 +336,7 @@ module.exports = async (client, interaction) => {
 
             if (name && bmInstance) {
                 playerId = Object.keys(bmInstance.players).find(e => bmInstance.players[e]['name'] === name);
+                if (!playerId) playerId = await bmInstance.searchPlayerIdByName(name);
                 if (!playerId) playerId = null;
             }
         }

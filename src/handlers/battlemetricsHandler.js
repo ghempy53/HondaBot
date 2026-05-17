@@ -85,15 +85,17 @@ module.exports = {
                             await module.exports.trackerNewNameDetected(client, guildId, trackerId, battlemetricsId,
                                 player.name, name);
 
-                            const newPlayerId = Object.keys(bmInstance.players)
+                            let newPlayerId = Object.keys(bmInstance.players)
                                 .find(e => bmInstance.players[e]['name'] === name);
+                            if (!newPlayerId) newPlayerId = await bmInstance.searchPlayerIdByName(name);
                             player.playerId = newPlayerId ? newPlayerId : null;
                             player.name = name;
                         }
                         else if (player.playerId === null ||
                             !bmInstance.players.hasOwnProperty(player.playerId)) {
-                            const resolvedPlayerId = Object.keys(bmInstance.players)
+                            let resolvedPlayerId = Object.keys(bmInstance.players)
                                 .find(e => bmInstance.players[e]['name'] === name);
+                            if (!resolvedPlayerId) resolvedPlayerId = await bmInstance.searchPlayerIdByName(name);
                             if (resolvedPlayerId) player.playerId = resolvedPlayerId;
                         }
                     }

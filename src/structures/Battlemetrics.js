@@ -193,6 +193,18 @@ class Battlemetrics {
     }
 
     /**
+     *  Construct the Battlemetrics API call for searching players by name,
+     *  scoped to this server. Used as a fallback when the local players cache
+     *  does not yet contain a player we want to resolve.
+     *  @param {string} name The name to search for.
+     *  @return {string} The Battlemetrics API call string.
+     */
+    SEARCH_PLAYER_NAME_API_CALL(name) {
+        return `https://api.battlemetrics.com/players?filter[search]=${encodeURIComponent(name)}` +
+            `&filter[servers]=${this.id}&page[size]=10`;
+    }
+
+    /**
      *  Construct the Battlemetrics API call for getting most time played data.
      *  @param {number} id The id of the server.
      *  @param {number} days The number of days before today to look.
@@ -504,6 +516,30 @@ class Battlemetrics {
         if (!data) return [];
 
         return this.#parseProfileDataApiResponse(data);
+    }
+
+    /**
+     *  Look up a Battlemetrics playerId for a given display name by querying
+     *  the Battlemetrics search API, restricted to this server. Used as a
+     *  fallback when the local players cache does not contain a match
+     *  (e.g. the player was offline at add-time, so they never appeared in
+     *  the server's online-only player list returned by evaluation()).
+     *  @param {string} name The display name to resolve.
+     *  @return {string|null} The Battlemetrics playerId, or null if not found.
+     */
+    async searchPlayerIdByName(name) {
+        if (this.id === null || !name) return null;
+
+        const data = await this.request(this.SEARCH_PLAYER_NAME_API_CALL(name));
+        if (!data || !Array.isArray(data.data)) return null;
+
+        const target = Utils.removeInvisibleCharacters(name);
+        for (const entry of data.data) {
+            if (entry.type !== 'player') continue;
+            const entryName = Utils.removeInvisibleCharacters(entry.attributes.name);
+            if (entryName === target) return entry.id;
+        }
+        return null;
     }
 
     /**
