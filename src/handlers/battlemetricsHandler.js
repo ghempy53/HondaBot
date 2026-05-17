@@ -90,6 +90,12 @@ module.exports = {
                             player.playerId = newPlayerId ? newPlayerId : null;
                             player.name = name;
                         }
+                        else if (player.playerId === null ||
+                            !bmInstance.players.hasOwnProperty(player.playerId)) {
+                            const resolvedPlayerId = Object.keys(bmInstance.players)
+                                .find(e => bmInstance.players[e]['name'] === name);
+                            if (resolvedPlayerId) player.playerId = resolvedPlayerId;
+                        }
                     }
 
                     client.setInstance(guildId, instance);
