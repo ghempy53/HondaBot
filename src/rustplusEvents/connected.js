@@ -130,7 +130,17 @@ module.exports = {
                 client.rustplusReconnectTimers[guildId] = null;
             }
 
-            await DiscordMessages.sendServerChangeStateMessage(guildId, serverId, 0);
+            /* If the offline notification was scheduled but never fired, the
+               user never saw "offline" — cancel it and skip the "online" pair. */
+            if (client.rustplusOfflineNotifyTimers[guildId]) {
+                clearTimeout(client.rustplusOfflineNotifyTimers[guildId]);
+                client.rustplusOfflineNotifyTimers[guildId] = null;
+            }
+
+            if (client.rustplusOfflineNotified[guildId]) {
+                client.rustplusOfflineNotified[guildId] = false;
+                await DiscordMessages.sendServerChangeStateMessage(guildId, serverId, 0);
+            }
         }
 
         await DiscordMessages.sendServerMessage(guildId, serverId, null);

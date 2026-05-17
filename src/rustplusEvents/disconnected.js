@@ -24,6 +24,9 @@ const Config = require('../../config');
 
 const MAX_RECONNECT_INTERVAL_MS = 300000; /* 5 minutes max backoff */
 const MAX_RECONNECT_ATTEMPTS = 50;        /* Stop after 50 attempts (~25 min at max backoff) */
+/* Grace period before announcing "server offline" — short ws drops (Pi 4 Wi-Fi
+   blips, Rust+ companion idle timeouts) usually reconnect well under this. */
+const OFFLINE_NOTIFY_GRACE_MS = 30000;
 
 module.exports = {
     name: 'disconnected',
@@ -63,8 +66,18 @@ module.exports = {
         /* Was the disconnection unexpected? */
         if (client.activeRustplusInstances[guildId]) {
             if (!client.rustplusReconnecting[guildId]) {
-                await DiscordMessages.sendServerChangeStateMessage(guildId, serverId, 1);
-                await DiscordMessages.sendServerMessage(guildId, serverId, 2);
+                /* Debounce the user-visible "offline" notification: if reconnect
+                   succeeds within the grace window, connected.js cancels this
+                   timer and no offline/online pair is announced. */
+                if (client.rustplusOfflineNotifyTimers[guildId]) {
+                    clearTimeout(client.rustplusOfflineNotifyTimers[guildId]);
+                }
+                client.rustplusOfflineNotifyTimers[guildId] = setTimeout(async () => {
+                    client.rustplusOfflineNotifyTimers[guildId] = null;
+                    client.rustplusOfflineNotified[guildId] = true;
+                    await DiscordMessages.sendServerChangeStateMessage(guildId, serverId, 1);
+                    await DiscordMessages.sendServerMessage(guildId, serverId, 2);
+                }, OFFLINE_NOTIFY_GRACE_MS);
                 client.rustplusReconnectAttempts[guildId] = 0;
             }
 
