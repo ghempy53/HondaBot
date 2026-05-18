@@ -84,13 +84,12 @@ async function messageBroadcastTeamMessage(rustplus, client, message) {
     let tempName = message.broadcast.teamMessage.message.name;
     let tempMessage = message.broadcast.teamMessage.message.message;
 
-    tempName = tempName.replace(/^<size=.*?><color=.*?>/, '');  /* Rustafied */
-    tempName = tempName.replace(/<\/color><\/size>$/, '');      /* Rustafied */
+    /* Strip Rust rich-text color/size tags from names and messages */
+    const tagRegex = /<\/?(color|size)(=[^>]*)?>/gi;
+    tempName = tempName.replace(tagRegex, '');
     message.broadcast.teamMessage.message.name = tempName;
 
-    tempMessage = tempMessage.replace(/^<size=.*?><color=.*?>/, '');  /* Rustafied */
-    tempMessage = tempMessage.replace(/<\/color><\/size>$/, '');      /* Rustafied */
-    tempMessage = tempMessage.replace(/^<color.+?<\/color>/g, '');      /* Unknown */
+    tempMessage = tempMessage.replace(tagRegex, '');
     message.broadcast.teamMessage.message.message = tempMessage;
 
     if (instance.blacklist['steamIds'].includes(`${steamId}`)) {
