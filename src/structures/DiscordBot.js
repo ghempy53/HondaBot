@@ -58,6 +58,8 @@ class DiscordBot extends Discord.Client {
         this.rustplusReconnectAttempts = new Object();
         this.rustplusMaps = new Object();
         this.rustplusMapInstances = new Object();   /* Cached Map objects for reconnection */
+        this.rustplusOfflineNotifyTimers = new Object();  /* Pending "server offline" debounce timers */
+        this.rustplusOfflineNotified = new Object();      /* Whether "offline" was actually announced */
 
         this.uptimeBot = null;
 
@@ -357,6 +359,11 @@ class DiscordBot extends Discord.Client {
             clearTimeout(this.rustplusLiteReconnectTimers[guildId]);
             this.rustplusLiteReconnectTimers[guildId] = null;
         }
+        if (this.rustplusOfflineNotifyTimers[guildId]) {
+            clearTimeout(this.rustplusOfflineNotifyTimers[guildId]);
+            this.rustplusOfflineNotifyTimers[guildId] = null;
+        }
+        this.rustplusOfflineNotified[guildId] = false;
     }
 
     isJpgImageChanged(guildId, map) {
