@@ -31,14 +31,27 @@ const OFFLINE_NOTIFY_GRACE_MS = 30000;
 module.exports = {
     name: 'disconnected',
     async execute(rustplus, client) {
+        const guildId = rustplus.guildId;
+        const serverId = rustplus.serverId;
+
+        /* Ignore disconnect events from orphaned instances (no longer the
+           registered instance for this guild). Otherwise the orphan's
+           reconnect path would delete the live instance from the map and
+           schedule a phantom reconnect, perpetuating the doubling. */
+        if (client.rustplusInstances[guildId] && client.rustplusInstances[guildId] !== rustplus) {
+            rustplus.isDeleted = true;
+            clearInterval(rustplus.pollingTaskId);
+            clearInterval(rustplus.tokensReplenishTaskId);
+            clearTimeout(rustplus.inGameChatTimeout);
+            for (const [, timer] of Object.entries(rustplus.timers)) timer.timer.stop();
+            return;
+        }
+
         if (!rustplus.isServerAvailable() && !rustplus.isDeleted) {
             rustplus.deleteThisRustplusInstance();
         }
 
         rustplus.log(client.intlGet(null, 'disconnectedCap'), client.intlGet(null, 'disconnectedFromServer'));
-
-        const guildId = rustplus.guildId;
-        const serverId = rustplus.serverId;
 
         if (rustplus.leaderRustPlusInstance !== null) {
             if (client.rustplusLiteReconnectTimers[guildId]) {

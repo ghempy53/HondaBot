@@ -312,6 +312,16 @@ class DiscordBot extends Discord.Client {
     }
 
     createRustplusInstance(guildId, serverIp, appPort, steamId, playerToken) {
+        /* Defensively dispose of any pre-existing instance for this guild
+           before overwriting the map. Otherwise the orphan keeps its own
+           websocket, polling tasks, and message listeners alive — causing
+           every team-chat command to receive duplicate responses. */
+        const existing = this.rustplusInstances[guildId];
+        if (existing) {
+            existing.isDeleted = true;
+            existing.disconnect();
+        }
+
         let rustplus = new RustPlus(guildId, serverIp, appPort, steamId, playerToken);
 
         /* Add rustplus instance to Object */
@@ -332,6 +342,12 @@ class DiscordBot extends Discord.Client {
             const guildId = file.replace('.json', '');
             const instance = this.getInstance(guildId);
             if (!instance) return;
+
+            /* Skip if a connection was already established during the long
+               ready.js setup window (e.g. the user clicked ServerConnect
+               before Battlemetrics/setupGuild finished). Creating a second
+               instance here would leave the manual one orphaned. */
+            if (this.rustplusInstances[guildId]) return;
 
             if (instance.activeServer !== null && instance.serverList.hasOwnProperty(instance.activeServer)) {
                 this.createRustplusInstance(
