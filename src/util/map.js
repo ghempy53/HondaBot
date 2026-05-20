@@ -61,11 +61,13 @@ module.exports = {
             pos.location = module.exports.getGridPos(x, y, mapSize);
         }
 
-        for (const monument of rustplus.map.monuments) {
-            if (monument.token === 'DungeonBase' || !(monument.token in rustplus.map.monumentInfo)) continue;
+        const monuments = rustplus.map?.monuments;
+        const monumentInfo = rustplus.map?.monumentInfo;
+        for (const monument of (Array.isArray(monuments) ? monuments : [])) {
+            if (monument.token === 'DungeonBase' || !monumentInfo || !(monument.token in monumentInfo)) continue;
             if (module.exports.getDistance(x, y, monument.x, monument.y) <=
-                rustplus.map.monumentInfo[monument.token].radius) {
-                pos.monument = rustplus.map.monumentInfo[monument.token].clean;
+                monumentInfo[monument.token].radius) {
+                pos.monument = monumentInfo[monument.token].clean;
                 break;
             }
         }

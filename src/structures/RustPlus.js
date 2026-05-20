@@ -81,6 +81,13 @@ class RustPlus extends RustPlusLib {
         this.inGameChatQueue = [];
         this.inGameChatTimeout = null;
 
+        /* Consecutive-timeout tracking to detect zombie WebSocket connections.
+           Rust+ requests time out at 10s; the OS TCP layer can take 15+ minutes
+           to surface a dead peer. After this many consecutive timeouts we force
+           a disconnect so the disconnected.js reconnect path runs. */
+        this.consecutiveTimeouts = 0;
+        this.MAX_CONSECUTIVE_TIMEOUTS = 3;
+
         /* Stores found vending machine items that are subscribed to */
         this.foundSubscriptionItems = { all: [], buy: [], sell: [] };
 
@@ -241,7 +248,7 @@ class RustPlus extends RustPlusLib {
     }
 
     updateBotMessages(message) {
-        if (this.messagesSentByBot === Constants.BOT_MESSAGE_HISTORY_LIMIT) {
+        if (this.messagesSentByBot.length >= Constants.BOT_MESSAGE_HISTORY_LIMIT) {
             this.messagesSentByBot.pop();
         }
         this.messagesSentByBot.unshift(message);
