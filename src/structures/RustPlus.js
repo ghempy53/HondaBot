@@ -647,9 +647,18 @@ class RustPlus extends RustPlusLib {
                 Client.client.intlGet(null, 'responseIsUndefined'), 'error');
             return false;
         }
-        else if (response.toString() === 'Error: Timeout reached while waiting for response') {
+
+        /* Detect timeout — both the upstream wording check (kept for backward
+           compat) and a robust `instanceof Error` check that survives library
+           wording changes. */
+        const isTimeout = (response instanceof Error &&
+                /timeout/i.test(response.message || '')) ||
+            response.toString() === 'Error: Timeout reached while waiting for response';
+
+        if (isTimeout) {
             this.log(Client.client.intlGet(null, 'errorCap'),
                 Client.client.intlGet(null, 'responseTimeout'), 'error');
+            this._noteTimeout();
             return false;
         }
         else if (response.hasOwnProperty('error')) {
@@ -661,10 +670,39 @@ class RustPlus extends RustPlusLib {
         else if (Object.keys(response).length === 0) {
             this.log(Client.client.intlGet(null, 'errorCap'),
                 Client.client.intlGet(null, 'responseIsEmpty'), 'error');
-            clearInterval(this.pollingTaskId);
+            /* Treat as a soft timeout — trip the same counter so a wedged
+               server (responses but empty) eventually reconnects, but don't
+               kill the polling loop in-place. */
+            this._noteTimeout();
             return false;
         }
+
+        /* Healthy response — reset zombie-connection counter. */
+        this.consecutiveTimeouts = 0;
         return true;
+    }
+
+    /**
+     *  Record a timed-out (or empty) response. After MAX_CONSECUTIVE_TIMEOUTS
+     *  in a row we force-disconnect the WebSocket so the disconnected.js
+     *  reconnect path runs. Without this, the bot can sit on a zombie TCP
+     *  socket for 15–20 minutes before the OS surfaces the dead peer.
+     */
+    _noteTimeout() {
+        this.consecutiveTimeouts += 1;
+        if (this.consecutiveTimeouts >= this.MAX_CONSECUTIVE_TIMEOUTS) {
+            this.log(Client.client.intlGet(null, 'errorCap'),
+                `Forcing reconnect after ${this.consecutiveTimeouts} consecutive timeouts ` +
+                `(zombie WebSocket detected).`, 'error');
+            this.consecutiveTimeouts = 0;
+            try {
+                this.disconnect();
+            }
+            catch (e) {
+                /* disconnect() can throw if the socket is already torn down;
+                   ignore — the disconnected event will still fire. */
+            }
+        }
     }
 
     /* Commands */
@@ -2747,7 +2785,7 @@ class RustPlus extends RustPlusLib {
             const regex = new RegExp('The language "(.*?)"');
             const invalidLanguage = regex.exec(e.message);
 
-            if (invalidLanguage.length === 2) {
+            if (invalidLanguage && invalidLanguage.length === 2) {
                 return Client.client.intlGet(this.guildId, 'languageLangNotSupported', {
                     language: invalidLanguage[1]
                 });

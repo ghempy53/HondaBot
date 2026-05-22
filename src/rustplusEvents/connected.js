@@ -36,6 +36,9 @@ module.exports = {
 
         rustplus.uptimeServer = new Date();
 
+        /* Reset zombie-connection counter for the fresh connection. */
+        rustplus.consecutiveTimeouts = 0;
+
         /* Start the token replenish task */
         rustplus.tokensReplenishTaskId = setInterval(rustplus.replenishTokens.bind(rustplus), 1000);
 

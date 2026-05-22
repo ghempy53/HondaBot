@@ -86,7 +86,10 @@ class RustPlusLite extends RustPlusLib {
                 Client.client.intlGet(null, 'responseIsUndefined'), 'error');
             return false;
         }
-        else if (response.toString() === 'Error: Timeout reached while waiting for response') {
+        const isTimeout = (response instanceof Error &&
+                /timeout/i.test(response.message || '')) ||
+            response.toString() === 'Error: Timeout reached while waiting for response';
+        if (isTimeout) {
             this.log(Client.client.intlGet(null, 'errorCap'),
                 Client.client.intlGet(null, 'responseTimeout'), 'error');
             return false;

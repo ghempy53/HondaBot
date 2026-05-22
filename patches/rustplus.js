@@ -109,6 +109,17 @@ class RustPlus extends EventEmitter {
 
             // fire event when disconnected
             this.websocket.on('close', () => {
+                // Reject any in-flight request callbacks so the awaiting
+                // promises don't sit until their own 10s timeout fires
+                // (and so we don't leak the callback entries).
+                const closedError = new Error('WebSocket closed before response was received');
+                const pendingSeqs = Object.keys(this.seqCallbacks);
+                for (const seq of pendingSeqs) {
+                    const cb = this.seqCallbacks[seq];
+                    delete this.seqCallbacks[seq];
+                    try { cb({ response: { seq: Number(seq), error: closedError } }); }
+                    catch (_) { /* swallow callback errors during teardown */ }
+                }
                 this.emit('disconnected');
             });
 
@@ -141,6 +152,24 @@ class RustPlus extends EventEmitter {
      */
     sendRequest(data, callback) {
 
+        // Guard: don't try to send on a missing or non-open socket. Without
+        // this, send() throws when the socket has been nulled by disconnect()
+        // (race with in-flight async requests) or when readyState is
+        // CONNECTING/CLOSING/CLOSED.
+        if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+            const err = new Error('WebSocket is not open');
+            if (callback) {
+                // Defer to next tick so callers (sendRequestAsync) get a clean
+                // rejection path instead of a synchronous throw.
+                setImmediate(() => {
+                    try { callback({ response: { seq: 0, error: err } }); }
+                    catch (_) { /* swallow */ }
+                });
+                return;
+            }
+            throw err;
+        }
+
         // increment sequence number
         let currentSeq = ++this.seq;
 
@@ -158,7 +187,21 @@ class RustPlus extends EventEmitter {
         });
 
         // send AppRequest packet to rust server
-        this.websocket.send(this.AppRequest.encode(request).finish());
+        try {
+            this.websocket.send(this.AppRequest.encode(request).finish());
+        }
+        catch (e) {
+            // If send() throws synchronously after our guard, drop the
+            // callback entry and surface the error via the same callback
+            // shape sendRequestAsync expects.
+            if (callback) {
+                delete this.seqCallbacks[currentSeq];
+                try { callback({ response: { seq: currentSeq, error: e } }); }
+                catch (_) { /* swallow */ }
+                return;
+            }
+            throw e;
+        }
 
         // fire event when request has been sent, this is useful for logging
         this.emit('request', request);
@@ -173,8 +216,19 @@ class RustPlus extends EventEmitter {
     sendRequestAsync(data, timeoutMilliseconds = 10000) {
         return new Promise((resolve, reject) => {
 
+            // Capture the current seq so the timeout handler can remove the
+            // leaked callback entry. sendRequest increments this.seq, so the
+            // value we want is this.seq + 1 *before* it's called. We can't
+            // know the seq before sendRequest runs, so we track it after.
+            let registeredSeq = null;
+
             // reject promise after timeout
             var timeout = setTimeout(() => {
+                // Drop the leaked callback so it doesn't pin memory and so
+                // a late reply doesn't fire into a stale closure.
+                if (registeredSeq !== null) {
+                    delete this.seqCallbacks[registeredSeq];
+                }
                 reject(new Error('Timeout reached while waiting for response'));
             }, timeoutMilliseconds);
 
@@ -197,6 +251,10 @@ class RustPlus extends EventEmitter {
                 }
 
             });
+
+            // Record the seq we just used so the timeout can clean it up.
+            // sendRequest just did ++this.seq, so the active key is this.seq.
+            registeredSeq = this.seq;
 
         });
     }

@@ -41,6 +41,7 @@ class Logger {
         /* Deduplication state to suppress repeated identical log messages */
         this._lastLogKey = null;
         this._lastRepeatCount = 0;
+        this._lastRepeatFirstTime = null;
     }
 
     setGuildId(guildId) {
@@ -64,20 +65,24 @@ class Logger {
         if (this._lastRepeatCount <= 0) return;
 
         const msg = `... repeated ${this._lastRepeatCount} more time${this._lastRepeatCount > 1 ? 's' : ''}`;
+        /* Use the timestamp of the first suppressed event when available so
+           the "... repeated N more times" line points at when the spam
+           started, not at the current flush moment. */
+        const stampedTime = this._lastRepeatFirstTime || time;
 
         switch (this.type) {
             case 'default': {
-                this.logger.log({ level: 'info', message: `${time} | ${msg}` });
-                console.log(pc.green(`${time} `) + pc.yellow(msg));
+                this.logger.log({ level: 'info', message: `${stampedTime} | ${msg}` });
+                console.log(pc.green(`${stampedTime} `) + pc.yellow(msg));
             } break;
 
             case 'guild': {
                 this.logger.log({
                     level: 'info',
-                    message: `${time} | ${this.guildId} | ${this.serverName} | ${msg}`
+                    message: `${stampedTime} | ${this.guildId} | ${this.serverName} | ${msg}`
                 });
                 console.log(
-                    pc.green(`${time} `) +
+                    pc.green(`${stampedTime} `) +
                     pc.cyan(`${this.guildId} `) +
                     pc.white(`${this.serverName} `) +
                     pc.yellow(msg));
@@ -85,6 +90,7 @@ class Logger {
         }
 
         this._lastRepeatCount = 0;
+        this._lastRepeatFirstTime = null;
     }
 
     log(title, text, level) {
@@ -93,12 +99,17 @@ class Logger {
         /* Deduplicate consecutive identical log messages */
         const logKey = `${title}|${text}|${level}`;
         if (logKey === this._lastLogKey) {
+            if (this._lastRepeatCount === 0) {
+                /* First repeat — remember when the spam started. */
+                this._lastRepeatFirstTime = time;
+            }
             this._lastRepeatCount++;
             return;
         }
         this._flushRepeat(time);
         this._lastLogKey = logKey;
         this._lastRepeatCount = 0;
+        this._lastRepeatFirstTime = null;
 
         switch (this.type) {
             case 'default': {
