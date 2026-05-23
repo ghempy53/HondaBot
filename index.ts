@@ -32,50 +32,57 @@ process.on('warning', (warning: NodeJS.ErrnoException) => {
 });
 
 /* The @liamcottle/push-receiver library logs `Request failed : ...` and
-   `Retrying in N seconds` directly to console on every failed checkin/register
-   call. When the network or DNS is down those lines pile up indefinitely. Wrap
-   console.log to log only the first occurrence, then a single summary line every
-   minute, until the next success. */
+   `Retrying in N seconds` directly to console.error on every failed
+   checkin/register call. When the network or DNS is down those lines pile up
+   indefinitely. Wrap console.log/console.error to log only the first
+   occurrence, then a single summary line every minute, until the next
+   success. */
 (() => {
     const originalLog = console.log.bind(console);
+    const originalError = console.error.bind(console);
     let suppressedSince: number | null = null;
     let suppressedCount = 0;
     let lastSummaryAt = 0;
     const SUMMARY_INTERVAL_MS = 60000;
 
-    const isFcmRetryNoise = (msg: string): boolean => {
-        return msg.startsWith('Request failed : ') || /^Retrying in \d+ seconds?$/.test(msg);
+    const isFcmRetryNoise = (args: unknown[]): boolean => {
+        if (args.length === 0) return false;
+        const joined = args.map(a => typeof a === 'string' ? a : String(a)).join(' ');
+        return joined.startsWith('Request failed : ') ||
+            /^Retrying in \d+ seconds?$/.test(joined);
     };
 
-    console.log = (...args: unknown[]) => {
-        const first = args[0];
-        if (typeof first === 'string' && isFcmRetryNoise(first)) {
+    const wrap = (emit: (...a: unknown[]) => void) => (...args: unknown[]) => {
+        if (isFcmRetryNoise(args)) {
             const now = Date.now();
             if (suppressedSince === null) {
                 suppressedSince = now;
                 lastSummaryAt = now;
-                originalLog(...args);
-                originalLog('(further FCM retry messages will be summarized while the failure persists)');
+                emit(...args);
+                emit('(further FCM retry messages will be summarized while the failure persists)');
                 return;
             }
             suppressedCount += 1;
             if (now - lastSummaryAt >= SUMMARY_INTERVAL_MS) {
                 lastSummaryAt = now;
-                originalLog(`(suppressed ${suppressedCount} FCM retry messages in the last ` +
+                emit(`(suppressed ${suppressedCount} FCM retry messages in the last ` +
                     `${Math.round((now - suppressedSince) / 1000)}s)`);
             }
             return;
         }
         if (suppressedSince !== null) {
             const elapsed = Math.round((Date.now() - suppressedSince) / 1000);
-            originalLog(`(FCM retry noise ended; suppressed ${suppressedCount} message` +
+            emit(`(FCM retry noise ended; suppressed ${suppressedCount} message` +
                 `${suppressedCount === 1 ? '' : 's'} over ${elapsed}s)`);
             suppressedSince = null;
             suppressedCount = 0;
             lastSummaryAt = 0;
         }
-        originalLog(...args);
+        emit(...args);
     };
+
+    console.log = wrap(originalLog);
+    console.error = wrap(originalError);
 })();
 
 createMissingDirectories();
