@@ -245,7 +245,9 @@ module.exports = async (client, guild) => {
     });
 
     client.fcmListeners[guild.id].on('disconnect', () => {
-        client.log(client.intlGet(null, 'warningCap'),
+        /* Google's MCS socket cycles every ~28 min; push-receiver reconnects
+           internally. Logged at info-level so it doesn't masquerade as a fault. */
+        client.log(client.intlGet(null, 'infoCap'),
             `FCM Host disconnected for guildId: ${guild.id}, steamId: ${hoster}. Reconnecting...`);
     });
 

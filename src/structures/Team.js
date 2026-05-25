@@ -23,7 +23,7 @@ const Player = require('./Player.js');
 
 class Team {
     constructor(team, rustplus) {
-        this._leaderSteamId = team.leaderSteamId.toString();
+        this._leaderSteamId = team.leaderSteamId ? team.leaderSteamId.toString() : null;
         this._players = [];
         this._teamSize = this.players.length;
 
@@ -50,7 +50,12 @@ class Team {
     set allOffline(allOffline) { this._allOffline = allOffline; }
 
     /* Change checkers */
-    isLeaderSteamIdChanged(team) { return (this.leaderSteamId !== team.leaderSteamId.toString()); }
+    isLeaderSteamIdChanged(team) {
+        /* Some broadcasts arrive without leaderSteamId during leadership transfer;
+           treat as unchanged so callers don't crash on .toString() of undefined. */
+        if (!team.leaderSteamId) return false;
+        return (this.leaderSteamId !== team.leaderSteamId.toString());
+    }
 
     updateTeam(team) {
         const instance = Client.client.getInstance(this.rustplus.guildId);
@@ -69,7 +74,7 @@ class Team {
                     }));
             }
         }
-        this.leaderSteamId = team.leaderSteamId.toString();
+        if (team.leaderSteamId) this.leaderSteamId = team.leaderSteamId.toString();
 
         let unhandled = this.players.slice();
         /* Add new players and update existing players */

@@ -281,7 +281,7 @@ message AppEntityPayload {
 }
 
 message AppTeamInfo {
-	required uint64 leaderSteamId = 1;
+	optional uint64 leaderSteamId = 1;
 	repeated AppTeamInfo.Member members = 2;
 	repeated AppTeamInfo.Note mapNotes = 3;
 	repeated AppTeamInfo.Note leaderMapNotes = 4;
