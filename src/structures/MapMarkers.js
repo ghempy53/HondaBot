@@ -310,7 +310,13 @@ class MapMarkers {
 
             marker.location = pos;
 
-            if (!this.rustplus.isFirstPoll) {
+            /* Vending machines that sit outside the grid system belong to the
+               Cargo Ship. Cargo Ship VMs move every poll so their (x,y) keys
+               are always "new" — emitting and tracking them would spam Discord
+               (hitting 429s) and balloon knownVendingMachines. Skip both. */
+            const isCargoShipVM = Map.isOutsideGridSystem(marker.x, marker.y, mapSize);
+
+            if (!this.rustplus.isFirstPoll && !isCargoShipVM) {
                 if (!this.knownVendingMachines.some(e => e.x === marker.x && e.y === marker.y)) {
                     this.rustplus.sendEvent(
                         this.rustplus.notificationSettings.vendingMachineDetectedSetting,
@@ -320,7 +326,9 @@ class MapMarkers {
                 }
             }
 
-            this.knownVendingMachines.push({ x: marker.x, y: marker.y });
+            if (!isCargoShipVM) {
+                this.knownVendingMachines.push({ x: marker.x, y: marker.y });
+            }
             this.vendingMachines.push(marker);
         }
 

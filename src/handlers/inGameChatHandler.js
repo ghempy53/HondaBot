@@ -20,11 +20,18 @@
 
 const Constants = require("../util/constants");
 
+/* Rust+ server rejects messages sent faster than ~1/sec with `message_not_sent`
+   or `rate_limit`. The commandDelay user setting defaults to 0, so multi-line
+   replies (e.g. `!market search`) flush back-to-back and get rejected by the
+   server. Enforce a floor independent of the user setting. */
+const MIN_IN_GAME_CHAT_DELAY_MS = 1500;
+
 module.exports = {
     inGameChatHandler: async function (rustplus, client, message = null, skipTrademark = false) {
         const guildId = rustplus.guildId;
         const generalSettings = rustplus.generalSettings;
-        const commandDelayMs = parseInt(generalSettings.commandDelay) * 1000;
+        const userDelayMs = parseInt(generalSettings.commandDelay) * 1000;
+        const commandDelayMs = Math.max(userDelayMs || 0, MIN_IN_GAME_CHAT_DELAY_MS);
         const trademark = generalSettings.trademark;
         const trademarkString = (trademark === 'NOT SHOWING' || skipTrademark) ? '' : `${trademark} | `;
         const messageMaxLength = Constants.MAX_LENGTH_TEAM_MESSAGE - trademarkString.length;
