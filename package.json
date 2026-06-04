@@ -51,6 +51,9 @@
     },
     "overrides": {
         "jpeg-js": "0.4.4",
-        "protobufjs": "8.0.0"
+        "protobufjs": "^8.5.0",
+        "form-data": "^2.5.5",
+        "tough-cookie": "^4.1.4",
+        "qs": "^6.15.2"
     }
 }
