@@ -179,8 +179,13 @@ cmd_build() {
     # Build with BuildKit (enabled globally for better caching)
     print_step "Building with Docker BuildKit..."
 
-    # Run build with proper terminal handling
-    docker compose -f "$COMPOSE_FILE" build --no-cache --progress=plain
+    # Skip provenance/SBOM attestations: not useful for a local Pi build and
+    # they add ~20s plus extra image manifests.
+    export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+
+    # Incremental build: reuse layer cache + BuildKit cache mounts. Use
+    # `rebuild` when you explicitly want a from-scratch (--no-cache) build.
+    docker compose -f "$COMPOSE_FILE" build --progress=plain
     local build_status=$?
     
     # Force terminal reset and newline
@@ -193,7 +198,7 @@ cmd_build() {
     else
         print_warning "BuildKit build failed (exit code: $build_status), trying without BuildKit..."
         
-        DOCKER_BUILDKIT=0 docker compose -f "$COMPOSE_FILE" build --no-cache
+        DOCKER_BUILDKIT=0 docker compose -f "$COMPOSE_FILE" build
         build_status=$?
         
         printf "\n"
