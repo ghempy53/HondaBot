@@ -58,7 +58,53 @@ class Items {
         return Object.keys(this.items).find(id => this.items[id].name === name);
     }
 
+    /**
+     * Smart item lookup used throughout the bot. Rather than only tolerating a couple of typos
+     * against the full item name, this resolves common community aliases ("ak", "hqm", "c4", ...)
+     * and matches partial names, individual words, shortnames and abbreviations so the user does
+     * not have to type the exact in-game name.
+     * Examples: "rifle" -> "Assault Rifle", "sheet metal" -> "Sheet Metal Door",
+     * "ak" -> "Assault Rifle", "hqm" -> "High Quality Metal", "assault rifel" (typo) -> "Assault Rifle".
+     */
     getClosestItemIdByName(name) {
+        if (name === null || name === undefined) return null;
+
+        const query = name.toString().toLowerCase().trim().replace(/\s+/g, ' ');
+        if (query === '') return null;
+
+        /* Community aliases / abbreviations take priority over fuzzy matching. */
+        const aliasId = this.resolveItemAlias(query);
+        if (aliasId !== null) return aliasId;
+
+        const queryTokens = query.split(' ').filter(token => token.length > 0);
+
+        let bestId = null;
+        let bestScore = 0;
+        let bestNameLength = Infinity;
+
+        for (const [id, item] of Object.entries(this.items)) {
+            const itemName = (item.name || '').toLowerCase();
+            const shortName = (item.shortname || '').toLowerCase();
+
+            const score = this.scoreItemMatch(query, queryTokens, itemName, shortName);
+            if (score <= 0) continue;
+
+            /* Highest score wins; on a tie prefer the shorter (more specific) item name. */
+            if (score > bestScore || (score === bestScore && itemName.length < bestNameLength)) {
+                bestScore = score;
+                bestNameLength = itemName.length;
+                bestId = id;
+            }
+        }
+
+        if (bestId !== null) return bestId;
+
+        /* Fall back to the original near-exact matching to keep handling whole-name typos. */
+        return this.getClosestItemIdByNameExact(query);
+    }
+
+    /* Original near-exact matcher (whole-string Levenshtein), kept as a fallback. */
+    getClosestItemIdByNameExact(name) {
         const closestString = Utils.findClosestString(name, this.itemNames);
         if (closestString !== null) {
             const id = Object.entries(this.items).find(([key, value]) => value.name === closestString);
@@ -66,6 +112,147 @@ class Items {
         }
         return null;
     }
+
+    /**
+     * Resolve a community alias/abbreviation to an item id. Aliases map to the canonical in-game
+     * name; if that name is not present in the current item set the alias is ignored (returns null)
+     * so the caller falls through to normal fuzzy matching.
+     */
+    resolveItemAlias(query) {
+        const canonicalName = Items.ITEM_ALIASES[query];
+        if (canonicalName === undefined) return null;
+        const id = this.getIdByName(canonicalName);
+        return id !== undefined ? id : null;
+    }
+
+    /**
+     * Score how well an item matches the search query. Higher is better, 0 means no match.
+     * Tiers are spaced far apart so a better match category always beats a weaker one.
+     */
+    scoreItemMatch(query, queryTokens, itemName, shortName) {
+        const shortNameCompact = shortName.replace(/[^a-z0-9]/g, '');
+        const nameTokens = itemName.split(/[^a-z0-9]+/).filter(token => token.length > 0);
+
+        /* Exact matches. */
+        if (itemName === query) return 1000;
+        if (shortName === query || shortNameCompact === query) return 950;
+
+        /* The item name (or shortname) starts with what was typed. */
+        if (itemName.startsWith(query)) return 900 - (itemName.length - query.length);
+        if (shortNameCompact.startsWith(query)) return 850 - (shortNameCompact.length - query.length);
+
+        /* A single word inside the item name starts with the query. */
+        if (nameTokens.some(token => token.startsWith(query))) return 800;
+
+        /* The query appears somewhere inside the name or shortname. */
+        if (itemName.includes(query)) return 700 - (itemName.length - query.length);
+        if (shortNameCompact.includes(query)) return 650;
+
+        /* Multi-word query: every typed word appears somewhere in the item name. */
+        if (queryTokens.length > 1 && queryTokens.every(token => itemName.includes(token))) return 600;
+
+        /* Every typed word is the prefix of some word in the item name (e.g. "ass rif"). */
+        if (queryTokens.every(token => nameTokens.some(nameToken => nameToken.startsWith(token)))) return 550;
+
+        /* Abbreviation/initials: typed letters match the first letter of each name word (e.g. "hqm"). */
+        if (queryTokens.length === 1 && query.length >= 2 && query.length === nameTokens.length &&
+            nameTokens.every((token, i) => token.startsWith(query[i]))) return 500;
+
+        /* Fuzzy fallback for typos in a single word, scaled by similarity. */
+        const distance = Utils.levenshteinDistance(query, itemName);
+        const maxLength = Math.max(query.length, itemName.length);
+        if (maxLength > 0) {
+            const similarity = 1 - (distance / maxLength);
+            /* Only accept reasonably close fuzzy matches. */
+            if (similarity >= 0.7) return Math.round(similarity * 400);
+        }
+
+        return 0;
+    }
 }
+
+/**
+ * Common Rust community aliases / abbreviations mapped to canonical in-game item names.
+ * Keys must be lowercase. If a mapped name is not present in items.json the alias is simply
+ * ignored at lookup time, so it is safe to keep entries that may not exist on every item set.
+ */
+Items.ITEM_ALIASES = {
+    /* Weapons */
+    'ak': 'Assault Rifle',
+    'ak47': 'Assault Rifle',
+    'ak-47': 'Assault Rifle',
+    'ar': 'Assault Rifle',
+    'bolt': 'Bolt Action Rifle',
+    'bolty': 'Bolt Action Rifle',
+    'boltie': 'Bolt Action Rifle',
+    'sar': 'Semi-Automatic Rifle',
+    'semi rifle': 'Semi-Automatic Rifle',
+    'mp5': 'MP5A4',
+    'tommy': 'Thompson',
+    'thomson': 'Thompson',
+    'smg': 'Custom SMG',
+    'm2': 'M249',
+    'lr': 'LR-300 Assault Rifle',
+    'lr300': 'LR-300 Assault Rifle',
+    'lr-300': 'LR-300 Assault Rifle',
+    'python': 'Python Revolver',
+    'py': 'Python Revolver',
+    'm92': 'M92 Pistol',
+    'p2': 'Semi-Automatic Pistol',
+    'sap': 'Semi-Automatic Pistol',
+    'semi pistol': 'Semi-Automatic Pistol',
+    'revo': 'Revolver',
+    'pump': 'Pump Shotgun',
+    'spas': 'Spas-12 Shotgun',
+    'spas12': 'Spas-12 Shotgun',
+    'spas-12': 'Spas-12 Shotgun',
+    'm39': 'M39 Rifle',
+    'l96': 'L96 Rifle',
+    'nailgun': 'Nailgun',
+
+    /* Resources */
+    'hqm': 'High Quality Metal',
+    'hq': 'High Quality Metal',
+    'hqmo': 'High Quality Metal Ore',
+    'frag': 'Metal Fragments',
+    'frags': 'Metal Fragments',
+    'metal frags': 'Metal Fragments',
+    'mf': 'Metal Fragments',
+    'sulf': 'Sulfur',
+    'gp': 'Gun Powder',
+    'gunpowder': 'Gun Powder',
+    'lgf': 'Low Grade Fuel',
+    'low grade': 'Low Grade Fuel',
+    'diesel': 'Diesel Fuel',
+    'fat': 'Animal Fat',
+    'coal': 'Charcoal',
+
+    /* Explosives */
+    'c4': 'Timed Explosive Charge',
+    'satch': 'Satchel Charge',
+    'satchel': 'Satchel Charge',
+    'beancan': 'Beancan Grenade',
+    'bean': 'Beancan Grenade',
+    'rocket': 'Rocket',
+    'explo': 'Explosives',
+
+    /* Building / deployables */
+    'tc': 'Tool Cupboard',
+    'cupboard': 'Tool Cupboard',
+    'bag': 'Sleeping Bag',
+    'box': 'Wood Storage Box',
+    'large box': 'Large Wood Box',
+    'big box': 'Large Wood Box',
+    'garage': 'Garage Door',
+    'sheet door': 'Sheet Metal Door',
+    'metal door': 'Sheet Metal Door',
+    'armored door': 'Armored Door',
+
+    /* Medical */
+    'syringe': 'Medical Syringe',
+    'syrtinge': 'Medical Syringe',
+    'meds': 'Medical Syringe',
+    'medkit': 'Large Medkit',
+};
 
 module.exports = Items;
