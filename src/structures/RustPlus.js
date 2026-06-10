@@ -1779,7 +1779,7 @@ class RustPlus extends RustPlusLib {
                     });
                 }
 
-                const itemId = Client.client.items.getClosestItemIdByName(name);
+                const itemId = Client.client.items.getClosestItemIdByNameSmart(name);
                 if (itemId === null) {
                     return Client.client.intlGet(this.guildId, 'noItemWithNameFound', {
                         name: name
@@ -1930,7 +1930,7 @@ class RustPlus extends RustPlusLib {
                     });
                 }
 
-                const itemId = Client.client.items.getClosestItemIdByName(name);
+                const itemId = Client.client.items.getClosestItemIdByNameSmart(name);
                 if (itemId === null) {
                     return Client.client.intlGet(this.guildId, 'noItemWithNameFound', {
                         name: name
@@ -1963,7 +1963,7 @@ class RustPlus extends RustPlusLib {
                     });
                 }
 
-                const itemId = Client.client.items.getClosestItemIdByName(name);
+                const itemId = Client.client.items.getClosestItemIdByNameSmart(name);
                 if (itemId === null) {
                     return Client.client.intlGet(this.guildId, 'noItemWithNameFound', {
                         name: name

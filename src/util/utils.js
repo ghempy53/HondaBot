@@ -63,6 +63,10 @@ module.exports = {
         return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
     },
 
+    levenshteinDistance: function (s1, s2) {
+        return levenshteinDistance(s1, s2);
+    },
+
     findClosestString: function (string, array, threshold = 2) {
         let minDistance = Infinity;
         let closestString = null;
