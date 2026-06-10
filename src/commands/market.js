@@ -118,7 +118,7 @@ module.exports = {
 
                 let itemId = null;
                 if (searchItemName !== null) {
-                    const item = client.items.getClosestItemIdByNameSmart(searchItemName)
+                    const item = client.items.getClosestItemIdByName(searchItemName)
                     if (item === null) {
                         const str = client.intlGet(interaction.guildId, 'noItemWithNameFound', {
                             name: searchItemName
@@ -236,7 +236,7 @@ module.exports = {
 
                 let itemId = null;
                 if (subscribeItemName !== null) {
-                    const item = client.items.getClosestItemIdByNameSmart(subscribeItemName)
+                    const item = client.items.getClosestItemIdByName(subscribeItemName)
                     if (item === null) {
                         const str = client.intlGet(interaction.guildId, 'noItemWithNameFound', {
                             name: subscribeItemName
@@ -304,7 +304,7 @@ module.exports = {
 
                 let itemId = null;
                 if (subscribeItemName !== null) {
-                    const item = client.items.getClosestItemIdByNameSmart(subscribeItemName)
+                    const item = client.items.getClosestItemIdByName(subscribeItemName)
                     if (item === null) {
                         const str = client.intlGet(interaction.guildId, 'noItemWithNameFound', {
                             name: subscribeItemName
