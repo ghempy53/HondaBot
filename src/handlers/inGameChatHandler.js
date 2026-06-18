@@ -27,7 +27,7 @@ const Constants = require("../util/constants");
 const MIN_IN_GAME_CHAT_DELAY_MS = 1500;
 
 module.exports = {
-    inGameChatHandler: async function (rustplus, client, message = null, skipTrademark = false) {
+    inGameChatHandler: async function (rustplus, client, message = null, skipTrademark = false, maxMessages = null, capNotice = null) {
         const guildId = rustplus.guildId;
         const generalSettings = rustplus.generalSettings;
         const userDelayMs = parseInt(generalSettings.commandDelay) * 1000;
@@ -75,13 +75,33 @@ module.exports = {
                 return;
             }
 
+            /* Build the full list of in-game chunks first so we can optionally cap
+               the number of messages actually displayed (post-split, i.e. the real
+               line count the player sees). */
+            let chunks = [];
             if (Array.isArray(message)) {
                 for (const msg of message) {
-                    handleMessage(rustplus, msg, trademarkString, messageMaxLength)
+                    chunks.push(...buildMessageChunks(msg, trademarkString, messageMaxLength));
                 }
             }
             else if (typeof message === 'string') {
-                handleMessage(rustplus, message, trademarkString, messageMaxLength)
+                chunks.push(...buildMessageChunks(message, trademarkString, messageMaxLength));
+            }
+
+            /* Cap the displayed messages when a limit is provided (e.g. in-game
+               `!market search` flooding chat on high-pop servers). Anything past
+               the limit is discarded. null = no cap (default behaviour). When a
+               capNotice is supplied, the last displayed message is replaced with
+               it so the player knows the output was truncated. */
+            if (typeof maxMessages === 'number' && maxMessages >= 0 && chunks.length > maxMessages) {
+                chunks = chunks.slice(0, maxMessages);
+                if (capNotice && maxMessages > 0) {
+                    chunks[chunks.length - 1] = `${trademarkString}${capNotice}`;
+                }
+            }
+
+            for (const chunk of chunks) {
+                rustplus.inGameChatQueue.push(chunk);
             }
         }
 
@@ -92,12 +112,11 @@ module.exports = {
     },
 };
 
-function handleMessage(rustplus, message, trademarkString, maxLength) {
-    if (typeof message !== 'string') return;
+function buildMessageChunks(message, trademarkString, maxLength) {
+    if (typeof message !== 'string') return [];
 
     const strings = message.match(new RegExp(`.{1,${maxLength}}(\\s|$)`, 'g'));
+    if (!strings) return [];
 
-    for (const str of strings) {
-        rustplus.inGameChatQueue.push(`${trademarkString}${str}`);
-    }
+    return strings.map(str => `${trademarkString}${str}`);
 }

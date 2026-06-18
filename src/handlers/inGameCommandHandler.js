@@ -111,7 +111,12 @@ module.exports = {
         }
         else if (commandLowerCase.startsWith(`${prefix}${client.intlGet('en', 'commandSyntaxMarket')} `) ||
             commandLowerCase.startsWith(`${prefix}${client.intlGet(guildId, 'commandSyntaxMarket')} `)) {
-            rustplus.sendInGameMessage(rustplus.getCommandMarket(command), true);
+            /* Cap in-game market results at 6 messages to avoid flooding chat on
+               high-pop servers (Discord output is unaffected — separate path).
+               When capped, the last message points the player to Discord for the
+               full, untruncated output. */
+            rustplus.sendInGameMessage(rustplus.getCommandMarket(command), true, 6,
+                'Use command in discord for full output');
         }
         else if (commandLowerCase === `${prefix}${client.intlGet('en', 'commandSyntaxMute')}` ||
             commandLowerCase === `${prefix}${client.intlGet(guildId, 'commandSyntaxMute')}`) {
