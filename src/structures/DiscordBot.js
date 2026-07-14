@@ -134,7 +134,9 @@ class DiscordBot extends Discord.Client {
     }
 
     loadGuildIntl(guildId) {
-        const instance = InstanceUtils.readInstanceFile(guildId);
+        /* Prefer the in-memory instance (source of truth at runtime); fall
+           back to disk during startup before instances are loaded. */
+        const instance = this.instances[guildId] ?? InstanceUtils.readInstanceFile(guildId);
         const language = instance.generalSettings.language;
         const path = Path.join(__dirname, '..', 'languages', `${language}.json`);
         const messages = JSON.parse(Fs.readFileSync(path, 'utf8'));
@@ -383,7 +385,14 @@ class DiscordBot extends Discord.Client {
     }
 
     isJpgImageChanged(guildId, map) {
-        return ((JSON.stringify(this.rustplusMaps[guildId])) !== (JSON.stringify(map.jpgImage)));
+        /* Compare raw buffers directly. JSON.stringify on multi-MB image
+           buffers created enormous temporary strings just to compare bytes. */
+        const oldImage = this.rustplusMaps[guildId];
+        const newImage = map.jpgImage;
+        if (Buffer.isBuffer(oldImage) && Buffer.isBuffer(newImage)) {
+            return !oldImage.equals(newImage);
+        }
+        return ((JSON.stringify(oldImage)) !== (JSON.stringify(newImage)));
     }
 
     findAvailableTrackerId(guildId) {

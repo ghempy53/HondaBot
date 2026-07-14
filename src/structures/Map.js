@@ -26,6 +26,16 @@ const Path = require('path');
 const Constants = require('../util/constants.js');
 const Client = require('../../index');
 
+/* Jimp fonts are expensive to parse and never change — load each font file
+   once per process instead of on every map render. */
+const fontCache = new Map();    /* fontPath -> Promise<Jimp font> */
+function loadFontCached(fontPath) {
+    if (!fontCache.has(fontPath)) {
+        fontCache.set(fontPath, Jimp.loadFont(fontPath));
+    }
+    return fontCache.get(fontPath);
+}
+
 class Map {
     constructor(map, rustplus) {
         this._width = map.width;
@@ -307,30 +317,43 @@ class Map {
         await this.writeMapClean();
         await this.setupFont();
         await this.setupMapMarkerImages();
+        await this.refreshBaseMapImage();
     }
 
     async writeMapClean() {
-        await Fs.writeFileSync(this.mapMarkerImageMeta.map.image, Client.client.rustplusMaps[this.rustplus.guildId]);
+        await Fs.promises.writeFile(
+            this.mapMarkerImageMeta.map.image, Client.client.rustplusMaps[this.rustplus.guildId]);
     }
 
     async setupFont() {
         if (this.rustplus.generalSettings.language === 'en') {
-            this.font = await Jimp.loadFont(
+            this.font = await loadFontCached(
                 Path.join(__dirname, '..', 'resources/fonts/PermanentMarker.fnt'));
         }
         else {
-            this.font = await Jimp.loadFont(
+            this.font = await loadFontCached(
                 Path.join(__dirname, '..', 'resources/fonts/YuGothic.fnt'));
         }
     }
 
+    /* Load the static marker images once per Map instance. They never change,
+       so there is no reason to re-read and re-resize them from disk on every
+       render (they are cloned before any mutation, see mapAppendMarkers). */
     async setupMapMarkerImages() {
         for (const [marker, content] of Object.entries(this.mapMarkerImageMeta)) {
+            if (marker === 'map') continue;
+            if (content.jimp !== null) continue;
             content.jimp = await Jimp.read(content.image);
-            if (marker !== 'map') {
-                content.jimp.resize(content.size, content.size);
-            }
+            content.jimp.resize(content.size, content.size);
         }
+    }
+
+    /* Reload the base map image from the in-memory buffer (no disk round
+       trip). This is the only image that has to be reset for each render,
+       since markers/monuments are composited onto it. */
+    async refreshBaseMapImage() {
+        this.mapMarkerImageMeta.map.jimp =
+            await Jimp.read(Client.client.rustplusMaps[this.rustplus.guildId]);
     }
 
     async mapAppendMonuments() {
@@ -400,11 +423,14 @@ class Map {
                 let markerImageMeta = this.getMarkerImageMetaByType(marker.type);
                 let size = this.mapMarkerImageMeta[markerImageMeta].size;
 
-                /* Rotate */
-                this.mapMarkerImageMeta[markerImageMeta].jimp.rotate(marker.rotation);
+                /* Clone before rotating so the cached marker image stays
+                   pristine — rotating the shared instance accumulated
+                   rotations across markers and renders. */
+                const markerImage = this.mapMarkerImageMeta[markerImageMeta].jimp.clone();
+                markerImage.rotate(marker.rotation);
 
                 this.mapMarkerImageMeta.map.jimp.composite(
-                    this.mapMarkerImageMeta[markerImageMeta].jimp, x - (size / 2), y - (size / 2)
+                    markerImage, x - (size / 2), y - (size / 2)
                 );
             }
             catch (e) {
@@ -414,7 +440,12 @@ class Map {
     }
 
     async writeMap(markers, monuments) {
-        await this.resetImageAndMeta();
+        /* Only the base map image needs resetting per render; fonts and
+           marker images are static and cached. The clean map file on disk is
+           written by the constructor/updateMap (when map data changes). */
+        await this.setupFont();
+        await this.setupMapMarkerImages();
+        await this.refreshBaseMapImage();
 
         if (markers) {
             await this.mapAppendMarkers();

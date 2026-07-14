@@ -126,8 +126,30 @@ process.on('unhandledRejection', error => {
     console.log(error);
 });
 
+/* Instance-file writes are debounced (see src/util/instanceUtils.js); flush
+   any pending writes before the process goes down so no state is lost. */
+const flushInstanceFiles = () => {
+    try {
+        require('./src/util/instanceUtils.js').flushInstanceFiles();
+    }
+    catch (e) {
+        /* Ignore */
+    }
+};
+
+process.on('exit', flushInstanceFiles);
+process.on('SIGINT', () => {
+    flushInstanceFiles();
+    process.exit(0);
+});
+process.on('SIGTERM', () => {
+    flushInstanceFiles();
+    process.exit(0);
+});
+
 process.on('uncaughtException', error => {
     console.error('Uncaught Exception:', error);
+    flushInstanceFiles();
     setTimeout(() => {
         process.exit(1);
     }, 1000);
