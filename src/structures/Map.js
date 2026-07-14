@@ -27,13 +27,16 @@ const Constants = require('../util/constants.js');
 const Client = require('../../index');
 
 /* Jimp fonts are expensive to parse and never change — load each font file
-   once per process instead of on every map render. */
-const fontCache = new Map();    /* fontPath -> Promise<Jimp font> */
+   once per process instead of on every map render.
+   NOTE: a plain object is used instead of `new Map()` because this module
+   declares its own `class Map` below, which shadows the global Map and would
+   throw a TDZ ReferenceError here. */
+const fontCache = Object.create(null);  /* fontPath -> Promise<Jimp font> */
 function loadFontCached(fontPath) {
-    if (!fontCache.has(fontPath)) {
-        fontCache.set(fontPath, Jimp.loadFont(fontPath));
+    if (!fontCache[fontPath]) {
+        fontCache[fontPath] = Jimp.loadFont(fontPath);
     }
-    return fontCache.get(fontPath);
+    return fontCache[fontPath];
 }
 
 class Map {
