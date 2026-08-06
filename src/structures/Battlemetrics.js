@@ -21,6 +21,7 @@
 const Axios = require('axios');
 
 const Client = require('../../index');
+const Config = require('../../config');
 const RandomUsernames = require('../staticFiles/RandomUsernames.json');
 const Utils = require('../util/utils.js');
 
@@ -243,7 +244,10 @@ class Battlemetrics {
         try {
             return await Axios.get(api_call, {
                 family: REQUEST_FAMILY,
-                timeout: REQUEST_TIMEOUT_MS
+                timeout: REQUEST_TIMEOUT_MS,
+                headers: {
+                    Authorization: `Bearer ${Config.battlemetrics.token}`,
+                }
             });
         }
         catch (e) {

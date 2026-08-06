@@ -32,7 +32,11 @@ module.exports = {
         username: process.env.RPP_DISCORD_USERNAME || 'rustplusplus',
         clientId: process.env.RPP_DISCORD_CLIENT_ID || '',
         token: process.env.RPP_DISCORD_TOKEN || '',
+        /* If true, only admins can delete (server, switch..), manage credentials and reset a channel */
         // FIX: Properly parse boolean - default to true unless explicitly set to 'false'
         needAdminPrivileges: process.env.RPP_NEED_ADMIN_PRIVILEGES !== 'false',
+    },
+    battlemetrics: {
+        token: process.env.RPP_BATTLEMETRICS_TOKEN || ''
     }
 };
