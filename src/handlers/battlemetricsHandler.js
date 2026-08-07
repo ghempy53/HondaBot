@@ -44,6 +44,12 @@ module.exports = {
             condition &= instance.activeServer !== null;
             condition &= bmId !== null;
             condition &= client.battlemetricsInstances.hasOwnProperty(bmId);
+            /* hasOwnProperty only proves the instance was constructed, not that it ever
+               populated. If setup() failed (API error, 403, outage) then server_name and
+               players are still null, and the embed builder dereferences them -- which
+               throws once per tick, forever. Require a successful update too. */
+            condition &= client.battlemetricsInstances[bmId] &&
+                client.battlemetricsInstances[bmId].lastUpdateSuccessful;
             condition &= rustplus && rustplus.isOperational;
 
             if (condition) {

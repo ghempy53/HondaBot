@@ -18,10 +18,98 @@
 
 */
 
+const Discord = require('discord.js');
+const Fs = require('fs');
+const Path = require('path');
+const sharp = require('sharp');
+
 const Client = require('../../index');
+
+/* Discord rejects attachments above 10 MiB on non-boosted guilds with
+   DiscordAPIError[40005] "Request entity too large". A full-map render on a
+   large monthly map, with markers and helicopter tracers composited on top,
+   can clear that -- and because the map is sent via message *edit*, the
+   failure is silent to users: the map simply stops updating.
+
+   Rather than dropping the message, downscale until it fits. Target well
+   under the cap to leave room for the multipart envelope and the embed. */
+const MAX_MAP_ATTACHMENT_BYTES = 9 * 1024 * 1024;
+
+/* Progressively more aggressive attempts. Palette-quantized PNG is very
+   effective on map renders (large flat-colour regions), and Discord displays
+   the embed image around 800px wide, so 2048 is already generous. */
+const MAP_COMPRESSION_STEPS = [
+    { maxDimension: null, palette: true },
+    { maxDimension: 2048, palette: true },
+    { maxDimension: 1536, palette: true },
+    { maxDimension: 1024, palette: true }
+];
 
 module.exports = {
     gridDiameter: 146.25,
+
+    /**
+     *  Build a Discord attachment for a generated map image, compressing it
+     *  first if it would exceed Discord's upload limit.
+     *
+     *  The returned attachment always keeps the original filename, because
+     *  discordEmbeds.js references it as `attachment://<guildId>_map_full.png`.
+     *  Renaming it would break that reference.
+     *
+     *  @param {string} mapPath Absolute path to the map image on disk.
+     *  @return {object} A Discord.AttachmentBuilder.
+     */
+    getMapAttachment: async function (mapPath) {
+        const name = Path.basename(mapPath);
+
+        let size = null;
+        try {
+            size = (await Fs.promises.stat(mapPath)).size;
+        }
+        catch (e) {
+            /* Missing or unreadable -- hand back the path and let the caller's
+               existing error handling report it, same as before. */
+            return new Discord.AttachmentBuilder(mapPath, { name: name });
+        }
+
+        if (size <= MAX_MAP_ATTACHMENT_BYTES) {
+            return new Discord.AttachmentBuilder(mapPath, { name: name });
+        }
+
+        for (const step of MAP_COMPRESSION_STEPS) {
+            try {
+                let pipeline = sharp(mapPath);
+
+                if (step.maxDimension !== null) {
+                    pipeline = pipeline.resize(step.maxDimension, step.maxDimension, {
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    });
+                }
+
+                const buffer = await pipeline
+                    .png({ compressionLevel: 9, palette: step.palette })
+                    .toBuffer();
+
+                if (buffer.length <= MAX_MAP_ATTACHMENT_BYTES) {
+                    Client.client.log(Client.client.intlGet(null, 'infoCap'),
+                        `Map image compressed from ${Math.round(size / 1024)}KB to ` +
+                        `${Math.round(buffer.length / 1024)}KB to fit Discord's upload limit.`);
+                    return new Discord.AttachmentBuilder(buffer, { name: name });
+                }
+            }
+            catch (e) {
+                /* Try the next, more aggressive step. */
+            }
+        }
+
+        /* Nothing fit. Return the original so the failure surfaces in logs the
+           way it does today rather than silently sending nothing. */
+        Client.client.log(Client.client.intlGet(null, 'errorCap'),
+            `Map image (${Math.round(size / 1024)}KB) could not be compressed under ` +
+            `Discord's upload limit; the send will likely fail.`, 'error');
+        return new Discord.AttachmentBuilder(mapPath, { name: name });
+    },
 
     getPos: function (x, y, mapSize, rustplus) {
         const correctedMapSize = module.exports.getCorrectedMapSize(mapSize);

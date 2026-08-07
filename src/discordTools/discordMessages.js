@@ -27,6 +27,7 @@ const DiscordButtons = require('./discordButtons.js');
 const DiscordEmbeds = require('./discordEmbeds.js');
 const DiscordSelectMenus = require('./discordSelectMenus.js');
 const DiscordTools = require('./discordTools.js');
+const Map = require('../util/map.js');
 const Scrape = require('../util/scrape.js');
 
 module.exports = {
@@ -297,7 +298,7 @@ module.exports = {
 
         const content = {
             embeds: [DiscordEmbeds.getServerWipeDetectedEmbed(guildId, serverId)],
-            files: [new Discord.AttachmentBuilder(
+            files: [await Map.getMapAttachment(
                 Path.join(__dirname, '..', '..', `maps/${guildId}_map_full.png`))],
             content: instance.generalSettings.mapWipeNotifyEveryone ? '@everyone' : ''
         }
@@ -319,7 +320,7 @@ module.exports = {
         const instance = Client.client.getInstance(guildId);
 
         const content = {
-            files: [new Discord.AttachmentBuilder(
+            files: [await Map.getMapAttachment(
                 Path.join(__dirname, '..', '..', `maps/${guildId}_map_full.png`))]
         }
 
@@ -399,7 +400,7 @@ module.exports = {
         const instance = Client.client.getInstance(rustplus.guildId);
 
         const content = {
-            files: [new Discord.AttachmentBuilder(
+            files: [await Map.getMapAttachment(
                 Path.join(__dirname, '..', '..', `maps/${rustplus.guildId}_map_full.png`))]
         }
 

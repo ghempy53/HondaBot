@@ -81,6 +81,9 @@ class RustPlus extends RustPlusLib {
         /* Chat handler variables */
         this.inGameChatQueue = [];
         this.inGameChatTimeout = null;
+        /* Consecutive send failures, used to collapse repeated identical rejections
+           (e.g. a server that blocks Rust+ app chat) into a single log line. */
+        this.inGameChatConsecutiveFailures = 0;
 
         /* Consecutive-timeout tracking to detect zombie WebSocket connections.
            Rust+ requests time out at 10s; the OS TCP layer can take 15+ minutes

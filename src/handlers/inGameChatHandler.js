@@ -51,14 +51,37 @@ module.exports = {
                 rustplus.sendTeamMessageAsync(messageFromQueue).then((result) => {
                     /* sendTeamMessageAsync resolves to the AppResponse on success, or returns
                        an Error/{error} on failure (it .catch()es internally). Surface failures
-                       so a silent server timeout doesn't masquerade as a successful send. */
+                       so a silent server timeout doesn't masquerade as a successful send.
+
+                       Failures here are frequently persistent rather than transient: a server
+                       running a plugin that blocks Rust+ app chat rejects every single message
+                       with the same error, which turns a per-message log into unbounded spam.
+                       Log the first failure of a run in full, then stay quiet until it recovers
+                       and report how many were swallowed -- same shape as the Battlemetrics
+                       consecutive-failure handling in Battlemetrics.js. */
+                    let reason = null;
                     if (result instanceof Error) {
-                        rustplus.log(client.intlGet(null, 'errorCap'),
-                            `In-game message dropped (${result.message}): ${messageFromQueue}`, 'error');
+                        reason = `dropped (${result.message})`;
                     }
                     else if (result && result.error) {
-                        rustplus.log(client.intlGet(null, 'errorCap'),
-                            `In-game message rejected (${JSON.stringify(result.error)}): ${messageFromQueue}`, 'error');
+                        reason = `rejected (${JSON.stringify(result.error)})`;
+                    }
+
+                    if (reason !== null) {
+                        if (rustplus.inGameChatConsecutiveFailures === 0) {
+                            rustplus.log(client.intlGet(null, 'errorCap'),
+                                `In-game message ${reason}: ${messageFromQueue}. ` +
+                                `Further identical failures will be suppressed until one succeeds.`,
+                                'error');
+                        }
+                        rustplus.inGameChatConsecutiveFailures += 1;
+                    }
+                    else if (rustplus.inGameChatConsecutiveFailures > 0) {
+                        rustplus.log(client.intlGet(null, 'infoCap'),
+                            `In-game messaging recovered after ` +
+                            `${rustplus.inGameChatConsecutiveFailures} failed message` +
+                            `${rustplus.inGameChatConsecutiveFailures === 1 ? '' : 's'}.`);
+                        rustplus.inGameChatConsecutiveFailures = 0;
                     }
                 });
             }
