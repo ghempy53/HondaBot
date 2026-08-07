@@ -1846,8 +1846,15 @@ class RustPlus extends RustPlusLib {
                        all; if players/cargo are populated but vending machines aren't, the
                        feed works and vending machines specifically are being withheld. */
                     const mm = this.mapMarkers;
+                    const typeNames = { 1: 'Player', 2: 'Explosion', 3: 'VendingMachine',
+                        4: 'CH47', 5: 'CargoShip', 6: 'Crate', 7: 'GenericRadius',
+                        8: 'PatrolHelicopter', 9: 'TravelingVendor' };
+                    const rawTypes = mm ? Object.entries(mm.lastMarkerTypeCounts)
+                        .map(([t, n]) => `${typeNames[t] || `type${t}`}=${n}`).join(',') || 'none' : 'n/a';
+
                     const breakdown = mm ? [
                         `raw=${(mm.markers && mm.markers.length) || 0}`,
+                        `rawTypes[${rawTypes}]`,
                         `players=${mm.players.length}`,
                         `vendingMachines=${mm.vendingMachines.length}`,
                         `cargoShips=${mm.cargoShips.length}`,

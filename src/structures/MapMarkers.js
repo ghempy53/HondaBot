@@ -77,6 +77,7 @@ class MapMarkers {
     /* Getters and Setters */
     get markers() { return this._markers; }
     set markers(markers) { this._markers = markers; }
+    get lastMarkerTypeCounts() { return this._lastMarkerTypeCounts || {}; }
     get rustplus() { return this._rustplus; }
     set rustplus(rustplus) { this._rustplus = rustplus; }
     get client() { return this._client; }
@@ -261,6 +262,22 @@ class MapMarkers {
     /* Update event map markers */
 
     updateMapMarkers(mapMarkers) {
+        /* Keep the raw payload current. This was previously only ever assigned in the
+           constructor, so `markers` held a first-poll snapshot for the life of the
+           connection -- misleading for anything trying to inspect the live feed. */
+        this._markers = mapMarkers.markers;
+
+        /* Histogram of the raw `type` values actually present this poll, regardless of
+           whether we recognise them. If the server sends marker types we don't have in
+           this.types (e.g. the protocol changed), they show up here but in none of the
+           category arrays -- which distinguishes "server withheld them" from "we failed
+           to categorise them". */
+        this._lastMarkerTypeCounts = new Object();
+        for (const marker of (mapMarkers.markers || [])) {
+            const key = `${marker.type}`;
+            this._lastMarkerTypeCounts[key] = (this._lastMarkerTypeCounts[key] || 0) + 1;
+        }
+
         this.updatePlayers(mapMarkers);
         this.updateCargoShips(mapMarkers);
         this.updatePatrolHelicopters(mapMarkers);
