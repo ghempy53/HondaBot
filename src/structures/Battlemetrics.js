@@ -242,12 +242,16 @@ class Battlemetrics {
      */
     async #request(api_call) {
         try {
+            /* Only send the Authorization header when a token is actually configured.
+               `Bearer ` with an empty token is a malformed credential and gets rejected,
+               whereas omitting the header entirely is a valid unauthenticated request. */
+            const headers = Config.battlemetrics.token !== '' ?
+                { Authorization: `Bearer ${Config.battlemetrics.token}` } : {};
+
             return await Axios.get(api_call, {
                 family: REQUEST_FAMILY,
                 timeout: REQUEST_TIMEOUT_MS,
-                headers: {
-                    Authorization: `Bearer ${Config.battlemetrics.token}`,
-                }
+                headers: headers
             });
         }
         catch (e) {

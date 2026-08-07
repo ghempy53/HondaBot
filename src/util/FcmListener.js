@@ -273,7 +273,7 @@ async function pairingServer(client, guild, title, message, body) {
 
     let battlemetricsId = server?.battlemetricsId ?? null;
     let connect = server?.connect ?? null;
-    if (Config.battlemetrics.token !== '') {
+    if (Config.battlemetrics.enabled) {
         const bmInstance = new Battlemetrics(null, title);
         await bmInstance.setup();
         if (bmInstance.lastUpdateSuccessful) {

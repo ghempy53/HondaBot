@@ -2131,7 +2131,7 @@ class RustPlus extends RustPlusLib {
     }
 
     getCommandPlayer(command) {
-        if (Config.battlemetrics.token === '') {
+        if (!Config.battlemetrics.enabled) {
             return null;
         }
 

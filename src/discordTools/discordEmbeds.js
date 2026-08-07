@@ -83,7 +83,7 @@ module.exports = {
         }
 
         let description = '';
-        if (Config.battlemetrics.token !== '' && server.battlemetricsId !== null) {
+        if (Config.battlemetrics.enabled && server.battlemetricsId !== null) {
             const bmId = server.battlemetricsId;
             const bmIdLink = `[${bmId}](${Constants.BATTLEMETRICS_SERVER_URL}${bmId})`;
             description += `__**${Client.client.intlGet(guildId, 'battlemetricsId')}:**__ ${bmIdLink}\n`;

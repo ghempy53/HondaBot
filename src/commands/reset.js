@@ -114,7 +114,7 @@ module.exports = {
 					await require('../discordTools/SetupStorageMonitors')(client, rustplus);
 				}
 
-				if (Config.battlemetrics.token !== '') {
+				if (Config.battlemetrics.enabled) {
 					await require('../discordTools/SetupTrackers')(client, guild);
 				}
 
@@ -246,7 +246,7 @@ module.exports = {
 			} break;
 
 			case 'trackers': {
-				if (Config.battlemetrics.token === '') {
+				if (!Config.battlemetrics.enabled) {
 					break;
 				}
 

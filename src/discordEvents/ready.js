@@ -73,7 +73,7 @@ module.exports = {
             await client.setupGuild(guild);
         }
 
-        if (Config.battlemetrics.token !== '') {
+        if (Config.battlemetrics.enabled) {
             await client.updateBattlemetricsInstances();
             BattlemetricsHandler.handler(client, true);
             client.battlemetricsIntervalId = setInterval(BattlemetricsHandler.handler, 60000, client, false);

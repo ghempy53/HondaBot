@@ -37,6 +37,15 @@ module.exports = {
         needAdminPrivileges: process.env.RPP_NEED_ADMIN_PRIVILEGES !== 'false',
     },
     battlemetrics: {
-        token: process.env.RPP_BATTLEMETRICS_TOKEN || ''
+        /* Auth token. Optional -- BattleMetrics limits Personal Access Tokens to paid
+           subscribers, but the public server/player/leaderboard endpoints this bot uses
+           serve fine unauthenticated (60 req/min, 15 req/sec). Supplying a token only
+           raises those ceilings to 300/min and 45/sec. */
+        token: process.env.RPP_BATTLEMETRICS_TOKEN || '',
+        /* Whether BattleMetrics features (trackers, /players, server BM info) are active.
+           Upstream keys this off the token being present, which silently disables every
+           tracker feature for anyone without a subscription. Decoupled here so the
+           features run unauthenticated by default; set to 'false' to turn them off. */
+        enabled: process.env.RPP_BATTLEMETRICS_ENABLED !== 'false'
     }
 };

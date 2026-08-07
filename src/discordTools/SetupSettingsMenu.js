@@ -263,7 +263,7 @@ async function setupGeneralSettings(client, guildId, channel) {
             Path.join(__dirname, '..', 'resources/images/settings_logo.png'))]
     });
 
-    if (Config.battlemetrics.token !== '') {
+    if (Config.battlemetrics.enabled) {
         await Timer.sleep(1100);
 
         await client.messageSend(channel, {

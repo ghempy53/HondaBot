@@ -122,7 +122,7 @@ module.exports = {
             emoji: '🗑️'
         });
 
-        if (Config.battlemetrics.token !== '' && server.battlemetricsId !== null) {
+        if (Config.battlemetrics.enabled && server.battlemetricsId !== null) {
             return [
                 new Discord.ActionRowBuilder().addComponents(
                     connectionButton, linkButton, battlemetricsButton, editButton, deleteButton

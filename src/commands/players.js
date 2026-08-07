@@ -70,7 +70,7 @@ module.exports = {
 		client.logInteraction(interaction, verifyId, 'slashCommand');
 
 		if (!await client.validatePermissions(interaction)) return;
-		if (Config.battlemetrics.token === '') return;
+		if (!Config.battlemetrics.enabled) return;
 		await interaction.deferReply({ flags: [Discord.MessageFlags.Ephemeral] });
 
 		let battlemetricsId = interaction.options.getString('battlemetricsid');
