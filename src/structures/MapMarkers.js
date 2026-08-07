@@ -232,7 +232,11 @@ class MapMarkers {
 
         for (let marker of this.getMarkersOfType(type, markers)) {
             if (this.isMarkerPresentByTypeXY(type, marker.x, marker.y)) {
-                leftMarkersOfType = leftMarkersOfType.filter(e => e.x !== marker.x) || e.y !== marker.y;
+                /* NOTE: the closing paren used to sit after `marker.x`, which put
+                   `|| e.y !== marker.y` outside the callback. filter() always returns
+                   an array (truthy), so the y-comparison was dead code and markers were
+                   matched on x alone. */
+                leftMarkersOfType = leftMarkersOfType.filter(e => e.x !== marker.x || e.y !== marker.y);
             }
         }
 
@@ -334,7 +338,11 @@ class MapMarkers {
 
         /* VendingMachine markers that have left. */
         for (let marker of leftMarkers) {
-            this.vendingMachines = this.vendingMachines.filter(e => e.x !== marker.x) || e.y !== marker.y;
+            /* Same misplaced-paren bug as in getLeftMarkersOfTypeXY: this removed every
+               vending machine sharing the departed marker's x coordinate, rather than
+               the single machine at (x, y). */
+            this.vendingMachines = this.vendingMachines.filter(e =>
+                e.x !== marker.x || e.y !== marker.y);
         }
 
         /* VendingMachine markers that still remains. */

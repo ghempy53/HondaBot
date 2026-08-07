@@ -1829,6 +1829,24 @@ class RustPlus extends RustPlusLib {
                 }
 
                 if (orders.length === 0) {
+                    /* Report the shape of the data we searched, so a "not found" can be
+                       told apart from an empty/degraded marker feed. Distinguishes:
+                         - vendingMachines 0        -> map markers aren't arriving at all
+                         - withSellOrders 0         -> markers arrive but carry no orders
+                         - both non-zero            -> genuine miss, or item-matching issue */
+                    const vmCount = this.mapMarkers ? this.mapMarkers.vendingMachines.length : 0;
+                    const withSellOrders = this.mapMarkers ? this.mapMarkers.vendingMachines
+                        .filter(e => e.hasOwnProperty('sellOrders') && e.sellOrders &&
+                            e.sellOrders.length > 0).length : 0;
+                    const totalOrders = this.mapMarkers ? this.mapMarkers.vendingMachines
+                        .reduce((n, e) => n + ((e.sellOrders && e.sellOrders.length) || 0), 0) : 0;
+
+                    this.log(Client.client.intlGet(null, 'infoCap'),
+                        `Market search miss: name="${name}" resolved to itemId=${itemId} ` +
+                        `(${Client.client.items.getName(itemId)}), orderType=${orderType}. ` +
+                        `Tracking ${vmCount} vending machines, ${withSellOrders} with sell orders, ` +
+                        `${totalOrders} orders total.`);
+
                     return Client.client.intlGet(this.guildId, 'noItemFound');
                 }
 
