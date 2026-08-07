@@ -1841,11 +1841,26 @@ class RustPlus extends RustPlusLib {
                     const totalOrders = this.mapMarkers ? this.mapMarkers.vendingMachines
                         .reduce((n, e) => n + ((e.sellOrders && e.sellOrders.length) || 0), 0) : 0;
 
+                    /* Also report every other marker category and the raw marker payload.
+                       If all categories are 0 the server isn't broadcasting map markers at
+                       all; if players/cargo are populated but vending machines aren't, the
+                       feed works and vending machines specifically are being withheld. */
+                    const mm = this.mapMarkers;
+                    const breakdown = mm ? [
+                        `raw=${(mm.markers && mm.markers.length) || 0}`,
+                        `players=${mm.players.length}`,
+                        `vendingMachines=${mm.vendingMachines.length}`,
+                        `cargoShips=${mm.cargoShips.length}`,
+                        `ch47s=${mm.ch47s.length}`,
+                        `patrolHelicopters=${mm.patrolHelicopters.length}`,
+                        `genericRadiuses=${mm.genericRadiuses.length}`
+                    ].join(' ') : 'mapMarkers=null';
+
                     this.log(Client.client.intlGet(null, 'infoCap'),
                         `Market search miss: name="${name}" resolved to itemId=${itemId} ` +
                         `(${Client.client.items.getName(itemId)}), orderType=${orderType}. ` +
                         `Tracking ${vmCount} vending machines, ${withSellOrders} with sell orders, ` +
-                        `${totalOrders} orders total.`);
+                        `${totalOrders} orders total. Markers: ${breakdown}`);
 
                     return Client.client.intlGet(this.guildId, 'noItemFound');
                 }
